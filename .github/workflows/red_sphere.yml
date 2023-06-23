@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - v1.3.1
+      - v1.3.2
 
 name: A sphere colored according to its normal vectors
 
