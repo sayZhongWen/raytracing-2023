@@ -1,7 +1,7 @@
 on:
   push:
     tags:
-      - v1.2.1
+      - v1.2.4
 
 name: A simple red sphere
 

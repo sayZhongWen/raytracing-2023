@@ -18,7 +18,7 @@ fn hit_sphere(center: &Vec3, radius: f64, r: &Ray) -> bool {
     let oc: Vec3 = r.orig() - center.clone();
     let a = r.dir().dot(r.dir());
     let b = 2.0 * oc.dot(r.dir());
-    let c = oc.clone().dot(oc.clone()) - radius * radius;
+    let c = oc.dot(oc.clone()) - radius * radius;
     b * b - 4.0 * a * c > 0.0
 }
 fn ray_color(r: &Ray) -> Vec3 {
