@@ -1,13 +1,13 @@
 mod color;
-mod vec3;
 mod ray;
+mod vec3;
 
+pub use crate::ray::Ray;
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::fs::File;
 pub use vec3::Vec3;
-pub use crate::ray::Ray;
 
 const AUTHOR: &str = "Dizzy_D";
 
@@ -15,10 +15,10 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
-fn ray_color(r: &Ray) -> Vec3{
+fn ray_color(r: &Ray) -> Vec3 {
     let unit_direction: Vec3 = r.dir().unit_vector();
-    let t=0.5*(unit_direction.y()+1.0);
-    (1.0-t)*Vec3::new(1.0,1.0,1.0)+t*Vec3::new(0.5,0.7,1.0)
+    let t = 0.5 * (unit_direction.y() + 1.0);
+    (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
@@ -33,17 +33,22 @@ fn main() {
     let quality = 60; // From 0 to 100, suggested value: 60
 
     //image
-    const ASPECT_RATIO: f64 = 16.0/9.0;
-    const width: usize = 400;
-    const height: usize = 225;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: usize = 400;
+    const IMAGE_HEIGHT: usize = 225;
+    let width = IMAGE_WIDTH;
+    let height = IMAGE_HEIGHT;
     //camera
-    let viewpoint_height:f64=2.0;
-    let viewpoint_width=viewpoint_height*ASPECT_RATIO;
-    let focal_length=1.0;
-    let origin=Vec3::new(0.0,0.0,0.0);
-    let horizontal=Vec3::new(viewpoint_width,0.0,0.0);
-    let vertical=Vec3::new(0.0,viewpoint_height,0.0);
-    let lower_left_corner=origin.clone()-horizontal.clone()/2.0-vertical.clone()/2.0-Vec3::new(0.0,0.0,focal_length);
+    let viewpoint_height: f64 = 2.0;
+    let viewpoint_width = viewpoint_height * ASPECT_RATIO;
+    let focal_length = 1.0;
+    let origin = Vec3::new(0.0, 0.0, 0.0);
+    let horizontal = Vec3::new(viewpoint_width, 0.0, 0.0);
+    let vertical = Vec3::new(0.0, viewpoint_height, 0.0);
+    let lower_left_corner = origin.clone()
+        - horizontal.clone() / 2.0
+        - vertical.clone() / 2.0
+        - Vec3::new(0.0, 0.0, focal_length);
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
@@ -59,13 +64,17 @@ fn main() {
 
     for j in 0..height {
         for i in 0..width {
-            let u=i as f64/(width-1) as f64;
-            let v=j as f64/(height-1) as f64;
-            let r=Ray::new(origin.clone(),lower_left_corner.clone()+horizontal.clone()*u+vertical.clone()*v-origin.clone());
-            let pixel_color=[
-                (ray_color(&r).x()*255.0).floor() as u8,
-                (ray_color(&r).y()*255.0).floor() as u8,
-                (ray_color(&r).z()*255.0).floor() as u8,
+            let u = i as f64 / (width - 1) as f64;
+            let v = j as f64 / (height - 1) as f64;
+            let r = Ray::new(
+                origin.clone(),
+                lower_left_corner.clone() + horizontal.clone() * u + vertical.clone() * v
+                    - origin.clone(),
+            );
+            let pixel_color = [
+                (ray_color(&r).x() * 255.0).floor() as u8,
+                (ray_color(&r).y() * 255.0).floor() as u8,
+                (ray_color(&r).z() * 255.0).floor() as u8,
             ];
             // let pixel_color = [
             //     (j as f32 / height as f32 * 255.).floor() as u8,
