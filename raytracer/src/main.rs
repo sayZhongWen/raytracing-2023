@@ -14,17 +14,24 @@ const AUTHOR: &str = "Dizzy_D";
 fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
-fn hit_sphere(center: &Vec3, radius: f64, r: &Ray) -> bool {
+fn hit_sphere(center: &Vec3, radius: f64, r: &Ray) -> f64 {
     let oc: Vec3 = r.orig() - center.clone();
     let a = r.dir().dot(r.dir());
     let b = 2.0 * oc.dot(r.dir());
     let c = oc.dot(oc.clone()) - radius * radius;
-    b * b - 4.0 * a * c > 0.0
+    let discriminant = b * b - 4.0 * a * c;
+    return if discriminant < 0.0 {
+        -1.0
+    } else {
+        (-b - discriminant.sqrt()) / (2.0 * a)
+    };
 }
 fn ray_color(r: &Ray) -> Vec3 {
-    if hit_sphere(&Vec3::new(0.0, 0.0, -1.0), 0.5, r) {
-        return Vec3::new(1.0, 0.0, 0.0);
-    }
+    let t = hit_sphere(&Vec3::new(0.0, 0.0, -1.0), 0.5, r);
+    if t > 0.0 {
+        let n = (r.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector();
+        return 0.5 * (n + 1.0);
+    };
     let unit_direction: Vec3 = r.dir().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)

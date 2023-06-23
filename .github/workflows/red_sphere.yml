@@ -1,9 +1,9 @@
 on:
   push:
     tags:
-      - v1.2.4
+      - v1.3.1
 
-name: A simple red sphere
+name: A sphere colored according to its normal vectors
 
 jobs:
   lint:
