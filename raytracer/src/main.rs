@@ -20,11 +20,11 @@ fn hit_sphere(center: &Vec3, radius: f64, r: &Ray) -> f64 {
     let b = 2.0 * oc.dot(r.dir());
     let c = oc.dot(oc.clone()) - radius * radius;
     let discriminant = b * b - 4.0 * a * c;
-    return if discriminant < 0.0 {
+    if discriminant < 0.0 {
         -1.0
     } else {
         (-b - discriminant.sqrt()) / (2.0 * a)
-    };
+    }
 }
 fn ray_color(r: &Ray) -> Vec3 {
     let t = hit_sphere(&Vec3::new(0.0, 0.0, -1.0), 0.5, r);
