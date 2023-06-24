@@ -84,7 +84,7 @@ fn main() {
             for _s in 0..SAMPLES_PER_PIXEL {
                 let u = (i as f64 + random_f64()) / ((width - 1) as f64);
                 let v = (j as f64 + random_f64()) / ((height - 1) as f64);
-                let r = cam.get_ray(u as f64, v as f64);
+                let r = cam.get_ray(u, v);
                 color += ray_color(r, &world);
             }
             let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
@@ -92,9 +92,9 @@ fn main() {
             let g = color.y() * scale;
             let b = color.z() * scale;
             let pixel_color = [
-                (256.0 * clamp(r as f64, 0.0, 0.999)) as u8,
-                (256.0 * clamp(g as f64, 0.0, 0.999)) as u8,
-                (256.0 * clamp(b as f64, 0.0, 0.999)) as u8,
+                (256.0 * clamp(r, 0.0, 0.999)) as u8,
+                (256.0 * clamp(g, 0.0, 0.999)) as u8,
+                (256.0 * clamp(b, 0.0, 0.999)) as u8,
             ];
 
             write_color(pixel_color, &mut img, i, height - j - 1);
