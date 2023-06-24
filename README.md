@@ -11,6 +11,9 @@
 Welcome to Ray Tracing 2023 !这是我2022-2023夏季学期的课程！
 
 在这个项目中我将学习一门新的语言Rust，并实现一个光线追踪渲染器（基于路径追踪算法），以此来了解 Computer Graphics 的基础工作。
+
+To TAs:github上每个tag的名字都遵循“v[book number].[checkpoint number].[trial times]"的形式，
+（由于实在是不太会修改每个workflow的名字）有关checkpoint的检查仅查看第二个数字即可，第三个数字可以忽略。
 ## Self-learning Reference
 
 * [Rust 官方文档中文教程](https://www.rustwiki.org.cn/)
