@@ -5,6 +5,7 @@ mod ray;
 mod rtweekend;
 mod sphere;
 mod vec3;
+mod camera;
 
 use crate::hittable::Hit;
 use crate::hittable_list::HittableList;
@@ -15,6 +16,8 @@ use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::fs::File;
 pub use vec3::Vec3;
+use crate::camera::Camera;
+use crate::rtweekend::*;
 
 const AUTHOR: &str = "Dizzy_D";
 
@@ -49,9 +52,10 @@ fn main() {
     let quality = 60; // From 0 to 100, suggested value: 60
 
     //image
-    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    // const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = 225;
+    const SAMPLES_PER_PIXEL:usize = 100;
     let width = IMAGE_WIDTH;
     let height = IMAGE_HEIGHT;
     //world
@@ -60,16 +64,7 @@ fn main() {
     world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
 
     //camera
-    let viewpoint_height: f64 = 2.0;
-    let viewpoint_width = viewpoint_height * ASPECT_RATIO;
-    let focal_length = 1.0;
-    let origin = Vec3::new(0.0, 0.0, 0.0);
-    let horizontal = Vec3::new(viewpoint_width, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewpoint_height, 0.0);
-    let lower_left_corner = origin.clone()
-        - horizontal.clone() / 2.0
-        - vertical.clone() / 2.0
-        - Vec3::new(0.0, 0.0, focal_length);
+    let cam=Camera::new();
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
@@ -85,23 +80,19 @@ fn main() {
 
     for j in 0..height {
         for i in 0..width {
-            let u = i as f64 / (width - 1) as f64;
-            let v = j as f64 / (height - 1) as f64;
-            let r = Ray::new(
-                origin.clone(),
-                lower_left_corner.clone() + horizontal.clone() * u + vertical.clone() * v
-                    - origin.clone(),
-            );
-            let pixel_color = [
-                (ray_color(r.clone(), &world).x() * 255.0).floor() as u8,
-                (ray_color(r.clone(), &world).y() * 255.0).floor() as u8,
-                (ray_color(r.clone(), &world).z() * 255.0).floor() as u8,
-            ];
-            // let pixel_color = [
-            //     (j as f32 / height as f32 * 255.).floor() as u8,
-            //     ((i + height - j) as f32 / (height + width) as f32 * 255.).floor() as u8,
-            //     (i as f32 / height as f32 * 255.).floor() as u8,
-            // ];
+            let mut color=Vec3::new(0.0,0.0,0.0);
+            for _s in 0..SAMPLES_PER_PIXEL{
+                let u = (i as f64 + random_f64()) / ((width-1)as f64);
+                let v = (j as f64 + random_f64()) / ((height-1) as f64);
+                let r = cam.get_ray(u as f64, v as f64);
+                color += ray_color(r, &world);
+            }
+            let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
+            let r = color.x()*scale;
+            let g = color.y()*scale;
+            let b = color.z()*scale;
+            let pixel_color=[(256.0 * clamp(r as f64, 0.0, 0.999)) as u8,(256.0 * clamp(g as f64, 0.0, 0.999))as u8,(256.0 * clamp(b as f64, 0.0, 0.999))as u8];
+
             write_color(pixel_color, &mut img, i, height - j - 1);
             bar.inc(1);
         }
