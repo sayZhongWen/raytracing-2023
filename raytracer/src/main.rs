@@ -45,8 +45,6 @@ fn main() {
 
     println!("CI: {}", is_ci);
 
-    // let height: usize = 800;
-    // let width: usize = 800;
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
 
