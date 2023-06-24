@@ -11,9 +11,9 @@ impl HittableList {
     pub fn add(&mut self, object: Box<dyn Hit>) {
         self.objects.push(object)
     }
-    pub fn clear(&mut self) {
-        self.objects.clear()
-    }
+    // pub fn clear(&mut self) {
+    //     self.objects.clear()
+    // }
 }
 impl Hit for HittableList {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
@@ -25,6 +25,6 @@ impl Hit for HittableList {
                 tmp_rec = Some(rec);
             }
         }
-        return tmp_rec;
+        tmp_rec
     }
 }

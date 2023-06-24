@@ -14,7 +14,7 @@ impl Hit for Sphere {
         let oc = r.orig() - self.clone().center;
         let a = r.dir().squared_length();
         let half_b = oc.dot(r.dir());
-        let c = oc.squared_length() - &self.radius * &self.radius;
+        let c = oc.squared_length() - self.radius * self.radius;
         let discriminant = half_b * half_b - a * c;
         if discriminant < 0.0 {
             return None;
@@ -29,6 +29,6 @@ impl Hit for Sphere {
         }
         let p = r.at(root);
         let outward_normal = (p.clone() - self.clone().center) / self.clone().radius;
-        return Some(HitRecord::new(p, root, outward_normal, r.clone()));
+        Some(HitRecord::new(p, root, outward_normal, r))
     }
 }
