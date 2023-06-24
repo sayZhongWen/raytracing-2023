@@ -1,3 +1,4 @@
+mod camera;
 mod color;
 mod hittable;
 mod hittable_list;
@@ -5,19 +6,18 @@ mod ray;
 mod rtweekend;
 mod sphere;
 mod vec3;
-mod camera;
 
+use crate::camera::Camera;
 use crate::hittable::Hit;
 use crate::hittable_list::HittableList;
 pub use crate::ray::Ray;
+use crate::rtweekend::*;
 use crate::sphere::Sphere;
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::fs::File;
 pub use vec3::Vec3;
-use crate::camera::Camera;
-use crate::rtweekend::*;
 
 const AUTHOR: &str = "Dizzy_D";
 
@@ -55,7 +55,7 @@ fn main() {
     // const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = 225;
-    const SAMPLES_PER_PIXEL:usize = 100;
+    const SAMPLES_PER_PIXEL: usize = 100;
     let width = IMAGE_WIDTH;
     let height = IMAGE_HEIGHT;
     //world
@@ -64,7 +64,7 @@ fn main() {
     world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
 
     //camera
-    let cam=Camera::new();
+    let cam = Camera::new();
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
@@ -80,18 +80,22 @@ fn main() {
 
     for j in 0..height {
         for i in 0..width {
-            let mut color=Vec3::new(0.0,0.0,0.0);
-            for _s in 0..SAMPLES_PER_PIXEL{
-                let u = (i as f64 + random_f64()) / ((width-1)as f64);
-                let v = (j as f64 + random_f64()) / ((height-1) as f64);
+            let mut color = Vec3::new(0.0, 0.0, 0.0);
+            for _s in 0..SAMPLES_PER_PIXEL {
+                let u = (i as f64 + random_f64()) / ((width - 1) as f64);
+                let v = (j as f64 + random_f64()) / ((height - 1) as f64);
                 let r = cam.get_ray(u as f64, v as f64);
                 color += ray_color(r, &world);
             }
             let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
-            let r = color.x()*scale;
-            let g = color.y()*scale;
-            let b = color.z()*scale;
-            let pixel_color=[(256.0 * clamp(r as f64, 0.0, 0.999)) as u8,(256.0 * clamp(g as f64, 0.0, 0.999))as u8,(256.0 * clamp(b as f64, 0.0, 0.999))as u8];
+            let r = color.x() * scale;
+            let g = color.y() * scale;
+            let b = color.z() * scale;
+            let pixel_color = [
+                (256.0 * clamp(r as f64, 0.0, 0.999)) as u8,
+                (256.0 * clamp(g as f64, 0.0, 0.999)) as u8,
+                (256.0 * clamp(b as f64, 0.0, 0.999)) as u8,
+            ];
 
             write_color(pixel_color, &mut img, i, height - j - 1);
             bar.inc(1);
