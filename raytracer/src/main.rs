@@ -1,8 +1,15 @@
 mod color;
+mod hittable;
+mod hittable_list;
 mod ray;
+mod rtweekend;
+mod sphere;
 mod vec3;
 
+use crate::hittable::Hit;
+use crate::hittable_list::HittableList;
 pub use crate::ray::Ray;
+use crate::sphere::Sphere;
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -14,16 +21,18 @@ const AUTHOR: &str = "Dizzy_D";
 fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
-fn hit_sphere(center: &Vec3, radius: f64, r: &Ray) -> bool {
-    let oc: Vec3 = r.orig() - center.clone();
-    let a = r.dir().dot(r.dir());
-    let b = 2.0 * oc.dot(r.dir());
-    let c = oc.clone().dot(oc.clone()) - radius * radius;
-    b * b - 4.0 * a * c > 0.0
-}
-fn ray_color(r: &Ray) -> Vec3 {
-    if hit_sphere(&Vec3::new(0.0, 0.0, -1.0), 0.5, r) {
-        return Vec3::new(1.0, 0.0, 0.0);
+
+// fn hit_sphere(center: &Vec3, radius: f64, r: &Ray) -> bool {
+//     let oc: Vec3 = r.orig() - center.clone();
+//     let a = r.dir().dot(r.dir());
+//     let b = 2.0 * oc.dot(r.dir());
+//     let c = oc.clone().dot(oc.clone()) - radius * radius;
+//     b * b - 4.0 * a * c > 0.0
+// }
+
+fn ray_color(r: Ray, world: &dyn Hit) -> Vec3 {
+    if let Some(rec) = world.hit(r.clone(), 0.0, f64::INFINITY) {
+        return 0.5 * (rec.normal + Vec3::ones());
     }
     let unit_direction: Vec3 = r.dir().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
@@ -47,6 +56,11 @@ fn main() {
     const IMAGE_HEIGHT: usize = 225;
     let width = IMAGE_WIDTH;
     let height = IMAGE_HEIGHT;
+    //world
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+
     //camera
     let viewpoint_height: f64 = 2.0;
     let viewpoint_width = viewpoint_height * ASPECT_RATIO;
@@ -81,9 +95,9 @@ fn main() {
                     - origin.clone(),
             );
             let pixel_color = [
-                (ray_color(&r).x() * 255.0).floor() as u8,
-                (ray_color(&r).y() * 255.0).floor() as u8,
-                (ray_color(&r).z() * 255.0).floor() as u8,
+                (ray_color(r.clone(), &world).x() * 255.0).floor() as u8,
+                (ray_color(r.clone(), &world).y() * 255.0).floor() as u8,
+                (ray_color(r.clone(), &world).z() * 255.0).floor() as u8,
             ];
             // let pixel_color = [
             //     (j as f32 / height as f32 * 255.).floor() as u8,
