@@ -35,7 +35,7 @@ impl<M: Material> Hit for Sphere<M> {
             }
         }
         let p = r.at(root);
-        let outward_normal = (p.clone() - self.center.clone()) / self.clone().radius;
+        let outward_normal = (p.clone() - self.center.clone()) / self.radius;
         Some(HitRecord::new(p, root, outward_normal, r, &self.material))
     }
 }

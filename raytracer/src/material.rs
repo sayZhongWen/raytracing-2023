@@ -1,5 +1,5 @@
 use crate::hittable::HitRecord;
-use crate::{ray::*, rtweekend::*, vec3::*};
+use crate::{ray::*, vec3::*};
 //有关生命周期的部分学习了https://zhuanlan.zhihu.com/p/441138623
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: HitRecord) -> Option<(Ray, Vec3)>;
@@ -16,7 +16,7 @@ impl Lambertian {
     }
 }
 impl Material for Lambertian {
-    fn scatter(&self, r_in: &Ray, rec: HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, _r_in: &Ray, rec: HitRecord) -> Option<(Ray, Vec3)> {
         let mut scatter_direction = rec.normal.clone() + random_unit_vector();
         if scatter_direction.near_zero() {
             scatter_direction = rec.normal;
