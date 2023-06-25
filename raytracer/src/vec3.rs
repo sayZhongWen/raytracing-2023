@@ -66,9 +66,9 @@ impl Vec3 {
         Vec3::new(random(min, max), random(min, max), random(min, max))
     }
 
-    pub fn near_zero(&self)->bool{
-        let s=1e-8;
-        self.x.abs()<s&&self.y.abs()<s&&self.z.abs()<s
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
     }
 }
 
@@ -95,8 +95,8 @@ pub fn random_unit_vector() -> Vec3 {
 //     }
 // }
 
-pub fn reflect(v:Vec3,n:Vec3)->Vec3{
-    v.clone()-2.0*v.dot(n.clone())*n
+pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+    v.clone() - 2.0 * v.dot(n.clone()) * n
 }
 impl Add for Vec3 {
     type Output = Self;
@@ -188,10 +188,10 @@ impl Mul<f64> for Vec3 {
 impl Mul<Vec3> for Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: Vec3) -> Self {
-        Self{
-            x:self.x*rhs.x,
-            y:self.y*rhs.y,
-            z:self.z*rhs.z,
+        Self {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z,
         }
     }
 }
