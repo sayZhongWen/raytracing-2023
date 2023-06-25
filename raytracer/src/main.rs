@@ -34,7 +34,7 @@ fn is_ci() -> bool {
 //     b * b - 4.0 * a * c > 0.0
 // }
 
-fn ray_color(r: Ray, world: &dyn Hit, depth: u32) -> Vec3 {
+fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::zero();
     }
@@ -91,7 +91,7 @@ fn main() {
                 let u = (i as f64 + random_f64()) / ((width - 1) as f64);
                 let v = (j as f64 + random_f64()) / ((height - 1) as f64);
                 let r = cam.get_ray(u, v);
-                color += ray_color(r, &world, MAX_DEPTH as u32);
+                color += ray_color(r, &world, MAX_DEPTH as i32);
             }
             let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
             let r = color.x() * scale;
