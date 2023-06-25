@@ -94,9 +94,9 @@ fn main() {
                 color += ray_color(r, &world, MAX_DEPTH as i32);
             }
             let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
-            let r = color.x() * scale;
-            let g = color.y() * scale;
-            let b = color.z() * scale;
+            let r = (color.x() * scale).sqrt();
+            let g = (color.y() * scale).sqrt();
+            let b = (color.z() * scale).sqrt();
             let pixel_color = [
                 (256.0 * clamp(r, 0.0, 0.999)) as u8,
                 (256.0 * clamp(g, 0.0, 0.999)) as u8,
