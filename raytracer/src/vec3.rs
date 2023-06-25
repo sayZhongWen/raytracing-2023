@@ -82,7 +82,7 @@ pub fn random_in_unit_sphere() -> Vec3 {
     }
 }
 
-pub fn random_unit_vector()->Vec3{
+pub fn random_unit_vector() -> Vec3 {
     random_in_unit_sphere().unit_vector()
 }
 impl Add for Vec3 {
