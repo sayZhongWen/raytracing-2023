@@ -13,6 +13,7 @@ use crate::hittable_list::HittableList;
 pub use crate::ray::Ray;
 use crate::rtweekend::*;
 use crate::sphere::Sphere;
+use crate::vec3::random_in_unit_sphere;
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -33,9 +34,13 @@ fn is_ci() -> bool {
 //     b * b - 4.0 * a * c > 0.0
 // }
 
-fn ray_color(r: Ray, world: &dyn Hit) -> Vec3 {
+fn ray_color(r: Ray, world: &dyn Hit, depth: u32) -> Vec3 {
+    if depth <= 0 {
+        return Vec3::zero();
+    }
     if let Some(rec) = world.hit(r.clone(), 0.0, f64::INFINITY) {
-        return 0.5 * (rec.normal + Vec3::ones());
+        let target: Vec3 = rec.p.clone() + rec.normal + random_in_unit_sphere();
+        return 0.5 * (ray_color(Ray::new(rec.p.clone(), target - rec.p), world, depth - 1));
     }
     let unit_direction: Vec3 = r.dir().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
@@ -56,6 +61,7 @@ fn main() {
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = 225;
     const SAMPLES_PER_PIXEL: usize = 100;
+    const MAX_DEPTH: usize = 50;
     let width = IMAGE_WIDTH;
     let height = IMAGE_HEIGHT;
     //world
@@ -85,7 +91,7 @@ fn main() {
                 let u = (i as f64 + random_f64()) / ((width - 1) as f64);
                 let v = (j as f64 + random_f64()) / ((height - 1) as f64);
                 let r = cam.get_ray(u, v);
-                color += ray_color(r, &world);
+                color += ray_color(r, &world, MAX_DEPTH as u32);
             }
             let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
             let r = color.x() * scale;

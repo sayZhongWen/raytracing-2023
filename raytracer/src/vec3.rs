@@ -1,6 +1,8 @@
 use std::f64;
 // use std::intrinsics::sqrtf64;
 // use std::num;
+use crate::rtweekend;
+use crate::rtweekend::random;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -56,8 +58,29 @@ impl Vec3 {
     pub fn unit_vector(&self) -> Vec3 {
         self.clone() / self.length()
     }
+
+    pub fn random_f64() -> Vec3 {
+        Vec3::new(
+            rtweekend::random_f64(),
+            rtweekend::random_f64(),
+            rtweekend::random_f64(),
+        )
+    }
+
+    pub fn random(min: f64, max: f64) -> Vec3 {
+        Vec3::new(random(min, max), random(min, max), random(min, max))
+    }
 }
 
+pub fn random_in_unit_sphere() -> Vec3 {
+    loop {
+        let p: Vec3 = Vec3::random(-1.0, 1.0);
+        if p.squared_length() > 1.0 {
+            continue;
+        }
+        return p;
+    }
+}
 impl Add for Vec3 {
     type Output = Self;
 
