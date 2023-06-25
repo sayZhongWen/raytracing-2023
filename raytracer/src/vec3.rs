@@ -81,6 +81,7 @@ pub fn random_in_unit_sphere() -> Vec3 {
         return p;
     }
 }
+
 impl Add for Vec3 {
     type Output = Self;
 
