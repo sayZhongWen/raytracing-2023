@@ -13,7 +13,7 @@ use crate::hittable_list::HittableList;
 pub use crate::ray::Ray;
 use crate::rtweekend::*;
 use crate::sphere::Sphere;
-use crate::vec3::random_in_unit_sphere;
+use crate::vec3::random_unit_vector;
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -38,8 +38,8 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::zero();
     }
-    if let Some(rec) = world.hit(r.clone(), 0.0, f64::INFINITY) {
-        let target: Vec3 = rec.p.clone() + rec.normal + random_in_unit_sphere();
+    if let Some(rec) = world.hit(r.clone(), 0.001, f64::INFINITY) {
+        let target: Vec3 = rec.p.clone() + rec.normal + random_unit_vector();
         return 0.5 * (ray_color(Ray::new(rec.p.clone(), target - rec.p), world, depth - 1));
     }
     let unit_direction: Vec3 = r.dir().unit_vector();
