@@ -1,8 +1,7 @@
 use std::f64;
 // use std::intrinsics::sqrtf64;
 // use std::num;
-use crate::rtweekend;
-use crate::rtweekend::random;
+use crate::rtweekend::*;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -60,15 +59,16 @@ impl Vec3 {
     }
 
     pub fn random_f64() -> Vec3 {
-        Vec3::new(
-            rtweekend::random_f64(),
-            rtweekend::random_f64(),
-            rtweekend::random_f64(),
-        )
+        Vec3::new(random_f64(), random_f64(), random_f64())
     }
 
     pub fn random(min: f64, max: f64) -> Vec3 {
         Vec3::new(random(min, max), random(min, max), random(min, max))
+    }
+
+    pub fn near_zero(&self)->bool{
+        let s=1e-8;
+        self.x.abs()<s&&self.y.abs()<s&&self.z.abs()<s
     }
 }
 
@@ -82,17 +82,21 @@ pub fn random_in_unit_sphere() -> Vec3 {
     }
 }
 
-// pub fn random_unit_vector() -> Vec3 {
-//     random_in_unit_sphere().unit_vector()
+pub fn random_unit_vector() -> Vec3 {
+    random_in_unit_sphere().unit_vector()
+}
+
+// pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+//     let in_unit_sphere = random_in_unit_sphere();
+//     if normal.dot(in_unit_sphere.clone()) > 0.0 {
+//         in_unit_sphere
+//     } else {
+//         -in_unit_sphere
+//     }
 // }
 
-pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
-    let in_unit_sphere = random_in_unit_sphere();
-    if normal.dot(in_unit_sphere.clone()) > 0.0 {
-        in_unit_sphere
-    } else {
-        -in_unit_sphere
-    }
+pub fn reflect(v:Vec3,n:Vec3)->Vec3{
+    v.clone()-2.0*v.dot(n.clone())*n
 }
 impl Add for Vec3 {
     type Output = Self;
@@ -182,9 +186,13 @@ impl Mul<f64> for Vec3 {
     }
 }
 impl Mul<Vec3> for Vec3 {
-    type Output = f64;
-    fn mul(self, rhs: Vec3) -> f64 {
-        self.dot(rhs)
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self {
+        Self{
+            x:self.x*rhs.x,
+            y:self.y*rhs.y,
+            z:self.z*rhs.z,
+        }
     }
 }
 impl MulAssign<f64> for Vec3 {

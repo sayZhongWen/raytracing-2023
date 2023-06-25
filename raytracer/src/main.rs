@@ -6,6 +6,7 @@ mod ray;
 mod rtweekend;
 mod sphere;
 mod vec3;
+mod material;
 
 use crate::camera::Camera;
 use crate::hittable::Hit;
@@ -13,12 +14,13 @@ use crate::hittable_list::HittableList;
 pub use crate::ray::Ray;
 use crate::rtweekend::*;
 use crate::sphere::Sphere;
-use crate::vec3::random_in_hemisphere;
+// use crate::vec3::random_in_hemisphere;
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::fs::File;
 pub use vec3::Vec3;
+use crate::material::{Lambertian, Metal};
 
 const AUTHOR: &str = "Dizzy_D";
 
@@ -39,8 +41,11 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
         return Vec3::zero();
     }
     if let Some(rec) = world.hit(r.clone(), 0.001, f64::INFINITY) {
-        let target: Vec3 = rec.p.clone() + random_in_hemisphere(&rec.normal);
-        return 0.5 * (ray_color(Ray::new(rec.p.clone(), target - rec.p), world, depth - 1));
+        return if let Some((scattered, attenuation)) = rec.material.scatter(&r, rec) {
+            attenuation * ray_color(scattered, world, depth - 1)
+        } else {
+            Vec3::zero()
+        }
     }
     let unit_direction: Vec3 = r.dir().unit_vector();
     let t = 0.5 * (unit_direction.y() + 1.0);
@@ -66,10 +71,16 @@ fn main() {
     let height = IMAGE_HEIGHT;
     //world
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0)));
+    let material_ground=Lambertian::new(&Vec3::new(0.8,0.8,0.0));
+    let material_center=Lambertian::new(&Vec3::new(0.7,0.3,0.3));
+    let material_left=Metal::new(&Vec3::new(0.8,0.8,0.8),0.3);
+    let material_right=Metal::new(&Vec3::new(0.8,0.6,0.2),1.0);
 
-    //camera
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0,material_ground)));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5,material_center)));
+    world.add(Box::new(Sphere::new(Vec3::new(-1.0,0.0,-1.0),0.5,material_left)));
+    world.add(Box::new(Sphere::new(Vec3::new(1.0,0.0,-1.0),0.5,material_right)));
+
     let cam = Camera::new();
 
     // Create image data
