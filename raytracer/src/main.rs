@@ -8,13 +8,13 @@ mod rtweekend;
 mod sphere;
 mod vec3;
 
-// use std::f64::consts::PI;
 use crate::camera::Camera;
 use crate::hittable::Hit;
 use crate::hittable_list::HittableList;
 pub use crate::ray::Ray;
 use crate::rtweekend::*;
 use crate::sphere::Sphere;
+// use std::f64::consts::PI;
 // use crate::vec3::random_in_hemisphere;
 use crate::material::{Dielectric, Lambertian, Metal};
 use color::write_color;
@@ -29,14 +29,6 @@ const AUTHOR: &str = "Dizzy_D";
 fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
-
-// fn hit_sphere(center: &Vec3, radius: f64, r: &Ray) -> bool {
-//     let oc: Vec3 = r.orig() - center.clone();
-//     let a = r.dir().dot(r.dir());
-//     let b = 2.0 * oc.dot(r.dir());
-//     let c = oc.clone().dot(oc.clone()) - radius * radius;
-//     b * b - 4.0 * a * c > 0.0
-// }
 
 fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
     if depth <= 0 {
@@ -53,39 +45,59 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
 }
-// pub fn random_scene()->HittableList{
-//     let mut world=HittableList::new();
-//     let ground_material=Lambertian::new(&Vec3::new(0.5,0.5,0.5));
-//     world.add(Box::new(Sphere::new(Vec3::new(0.0,-1000.0,0.0),1000.0,ground_material)));
-//     for a in -11..11{
-//         for b in -11..11{
-//             let choose_mat=random_f64();
-//             let center=Vec3::new(a+0.9*random_f64(),0.2,b+0.9*random_f64());
-//             if (center.clone()-Vec3::new(4.0,0.2,0.0)).length>0.9{
-//                 if choose_mat<0.8{
-//                     let albedo=Vec3::random_f64()*Vec3::random_f64();
-//                     let sphere_material=Lambertian::new(&albedo);
-//                     world.add(Box::new(Sphere::new(center,0.2,sphere_material)));
-//                 }else if choose_mat<0.95{
-//                     let albedo=Vec3::random(0.5,1.0);
-//                     let fuzz=random(0.0,0.5);
-//                     let sphere_material=Metal::new(&albedo,fuzz);
-//                     world.add(Box::new(Sphere::new(center,0.2,sphere_material)));
-//                 }else{
-//                     let sphere_material=Dielectric::new(1.5);
-//                     world.add(Box::new(Sphere::new(center,0.2,sphere_material)));
-//                 }
-//             }
-//         }
-//     }
-//     let material1=Dielectric::new(1.5);
-//     world.add(Box::new(Sphere::new(Vec3::new(0.0,1.0,0.0),1.0,material1)));
-//     let material2=Lambertian::new(&Vec3::new(0.4,0.2,0.1));
-//     world.add(Box::new(Sphere::new(Vec3::new(-4.0,1.0,0.0),1.0,material2)));
-//     let material3=Metal::new(&Vec3::new(0.7,0.6,0.5),0.0);
-//     world.add(Box::new(Sphere::new(Vec3::new(4.0,1.0,0.0),1.0,material3)));
-//     world
-// }
+pub fn random_scene() -> HittableList {
+    let mut world = HittableList::new();
+    let ground_material = Lambertian::new(&Vec3::new(0.5, 0.5, 0.5));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        ground_material,
+    )));
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = random_f64();
+            let center = Vec3::new(
+                a as f64 + 0.9 * random_f64(),
+                0.2,
+                b as f64 + 0.9 * random_f64(),
+            );
+            if (center.clone() - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    let albedo = Vec3::random_f64() * Vec3::random_f64();
+                    let sphere_material = Lambertian::new(&albedo);
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                } else if choose_mat < 0.95 {
+                    let albedo = Vec3::random(0.5, 1.0);
+                    let fuzz = random(0.0, 0.5);
+                    let sphere_material = Metal::new(&albedo, fuzz);
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                } else {
+                    let sphere_material = Dielectric::new(1.5);
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                }
+            }
+        }
+    }
+    let material1 = Dielectric::new(1.5);
+    world.add(Box::new(Sphere::new(
+        Vec3::new(0.0, 1.0, 0.0),
+        1.0,
+        material1,
+    )));
+    let material2 = Lambertian::new(&Vec3::new(0.4, 0.2, 0.1));
+    world.add(Box::new(Sphere::new(
+        Vec3::new(-4.0, 1.0, 0.0),
+        1.0,
+        material2,
+    )));
+    let material3 = Metal::new(&Vec3::new(0.7, 0.6, 0.5), 0.0);
+    world.add(Box::new(Sphere::new(
+        Vec3::new(4.0, 1.0, 0.0),
+        1.0,
+        material3,
+    )));
+    world
+}
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -96,61 +108,32 @@ fn main() {
     let quality = 60; // From 0 to 100, suggested value: 60
 
     //image
-    // const ASPECT_RATIO: f64 = 16.0 / 9.0;
-    const IMAGE_WIDTH: usize = 400;
-    const IMAGE_HEIGHT: usize = 225;
-    const SAMPLES_PER_PIXEL: usize = 100;
+    const ASPECT_RATIO: f64 = 3.0 / 2.0;
+    const IMAGE_WIDTH: usize = 1200;
+    const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
+    const SAMPLES_PER_PIXEL: usize = 500;
     const MAX_DEPTH: usize = 50;
     let width = IMAGE_WIDTH;
     let height = IMAGE_HEIGHT;
+
     //world
-    // let R=cosf64(PI/4);
-    // let material_left=Lambertian::new(&Vec3::new(0.0,0.0,1.0));
-    // let material_right=Lambertian::new(&Vec3::new(1.0,0.0,0.0));
-    // world.add(Box::new(Sphere::new(Vec3::new(-R,0.0,1.0),R,material_left)));
-    // world.add(Box::new(Sphere::new(Vec3::new(R,0.0,1.0),R,material_right)));
-    let mut world = HittableList::new();
-    let material_ground = Lambertian::new(&Vec3::new(0.8, 0.8, 0.0));
-    let material_center = Lambertian::new(&Vec3::new(0.1, 0.2, 0.5));
-    let material_left = Dielectric::new(1.5);
-    let material_right = Metal::new(&Vec3::new(0.8, 0.6, 0.2), 0.0);
+    let world = random_scene();
 
-    world.add(Box::new(Sphere::new(
-        Vec3::new(0.0, -100.5, -1.0),
-        100.0,
-        material_ground,
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(0.0, 0.0, -1.0),
-        0.5,
-        material_center,
-    )));
-
-    world.add(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        0.5,
-        material_left.clone(),
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(-1.0, 0.0, -1.0),
-        -0.4,
-        material_left,
-    )));
-    world.add(Box::new(Sphere::new(
-        Vec3::new(1.0, 0.0, -1.0),
-        0.5,
-        material_right,
-    )));
-
-    let cam = Camera::new();
-    // let cam=Camera::new(90.0,aspect_ratio);
-
-    // let lookfrom=Vec3::new(3.0,3.0,2.0);
-    // let lookat=Vec3::new(0.0,0.0,-1.0);
-    // let vup=Vec3::new(0.0,1.0,0.0);
-    // let dist_to_focus=(lookfrom-lookat).length();
-    // let aperture=2.0;
-    // let cam=Camera(lookfrom,lookat,vup,20,aspect_ratio,aperture,dist_to_focus);
+    //camera
+    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
+    let lookat = Vec3::new(0.0, 0.0, 0.0);
+    let vup = Vec3::new(0.0, 1.0, 0.0);
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
+    let cam = Camera::new(
+        lookfrom,
+        lookat,
+        vup,
+        20.0,
+        ASPECT_RATIO,
+        aperture,
+        dist_to_focus,
+    );
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
