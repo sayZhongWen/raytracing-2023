@@ -95,8 +95,23 @@ pub fn random_unit_vector() -> Vec3 {
 //     }
 // }
 
-pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
-    v.clone() - 2.0 * v.dot(n.clone()) * n
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    v.clone() - 2.0 * v.dot(n.clone()) * n.clone()
+}
+
+pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+    let cos_theta = (-uv.clone()).dot(n.clone()).min(1.0);
+    let r_out_perp = etai_over_etat * (uv.clone() + cos_theta * n.clone());
+    let r_out_parallel = -((1.0 - r_out_perp.squared_length()).abs().sqrt()) * n.clone();//
+    r_out_perp+r_out_parallel
+}
+
+pub fn random_in_unit_disk()->Vec3{
+    loop{
+        let p=Vec3::new(random(-1.0,1.0),random(-1.0,1.0),0.0);
+        if p.squared_length()>1.0 {continue};
+        return p;
+    }
 }
 impl Add for Vec3 {
     type Output = Self;
