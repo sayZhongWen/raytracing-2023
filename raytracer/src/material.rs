@@ -78,17 +78,14 @@ impl Material for Dielectric {
             self.ir
         };
         let unit_direction = r_in.dir().unit_vector();
-        // let cos_theta:f64=(-unit_direction.clone()).dot(rec.normal.clone()).min(1.0);
-        // let sin_theta:f64=(1.0 - cos_theta*cos_theta).sqrt();
-        // let cannot_reflect:bool=refraction_ratio*sin_theta>1.0;
-        // let cannot_reflect||
-        // let direction=if cannot_reflect{
-        //     reflect(unit_direction,rec.normal)
-        // }else{
-        //     refract(unit_direction,rec.normal,refraction_ratio)
-        // };
-        // Some((Ray::new(rec.p, direction), attenuation))
-        let refracted = refract(&unit_direction, &rec.clone().normal, refraction_ratio);
-        Some((Ray::new(rec.clone().p, refracted), attenuation))
+        let cos_theta: f64 = (-unit_direction.clone()).dot(rec.normal.clone()).min(1.0);
+        let sin_theta: f64 = (1.0 - cos_theta * cos_theta).sqrt();
+        let cannot_refract: bool = refraction_ratio * sin_theta > 1.0;
+        let direction = if cannot_refract {
+            reflect(&unit_direction, &rec.normal)
+        } else {
+            refract(&unit_direction, &rec.normal, refraction_ratio)
+        };
+        Some((Ray::new(rec.p.clone(), direction), attenuation))
     }
 }

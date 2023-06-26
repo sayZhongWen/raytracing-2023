@@ -111,11 +111,9 @@ fn main() {
     // world.add(Box::new(Sphere::new(Vec3::new(R,0.0,1.0),R,material_right)));
     let mut world = HittableList::new();
     let material_ground = Lambertian::new(&Vec3::new(0.8, 0.8, 0.0));
-    let material_center = Dielectric::new(1.5);
-    // let material_center=Lambertian::new(&Vec3::new(0.1,0.2,0.5));
+    let material_center = Lambertian::new(&Vec3::new(0.1, 0.2, 0.5));
     let material_left = Dielectric::new(1.5);
-    let material_right = Metal::new(&Vec3::new(0.8, 0.6, 0.2), 1.0);
-    // let material_right = Metal::new(&Vec3::new(0.8, 0.6, 0.2), 0.0);
+    let material_right = Metal::new(&Vec3::new(0.8, 0.6, 0.2), 0.0);
 
     world.add(Box::new(Sphere::new(
         Vec3::new(0.0, -100.5, -1.0),
