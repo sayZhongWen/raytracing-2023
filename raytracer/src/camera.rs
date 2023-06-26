@@ -6,7 +6,7 @@ pub struct Camera {
     vertical: Vec3,
     u: Vec3,
     v: Vec3,
-    w: Vec3,
+    // w: Vec3,
     lens_radius: f64,
 }
 impl Camera {
@@ -29,7 +29,7 @@ impl Camera {
         let ori = lookfrom;
         let hori = focus_dist * viewpoint_width * uu.clone();
         let vert = focus_dist * viewpoint_height * vv.clone();
-        let llc = ori.clone() - hori.clone() / 2.0 - vert.clone() / 2.0 - focus_dist * ww.clone();
+        let llc = ori.clone() - hori.clone() / 2.0 - vert.clone() / 2.0 - focus_dist * ww;
         Self {
             origin: ori,
             horizontal: hori,
@@ -37,7 +37,7 @@ impl Camera {
             lower_left_corner: llc,
             u: uu,
             v: vv,
-            w: ww,
+            // w: ww,
             lens_radius: aperture / 2.0,
         }
     }

@@ -15,6 +15,11 @@ impl HittableList {
     //     self.objects.clear()
     // }
 }
+impl Default for HittableList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Hit for HittableList {
     fn hit(&self, r: Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut tmp_rec: Option<HitRecord> = None;
