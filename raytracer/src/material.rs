@@ -1,5 +1,4 @@
 use crate::hittable::HitRecord;
-use std::num;
 use crate::{ray::*, vec3::*};
 //有关生命周期的部分学习了https://zhuanlan.zhihu.com/p/441138623
 pub trait Material {
@@ -20,9 +19,12 @@ impl Material for Lambertian {
     fn scatter(&self, _r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
         let mut scatter_direction = rec.normal.clone() + random_unit_vector();
         if scatter_direction.near_zero() {
-            scatter_direction = rec.normal.clone();
+            scatter_direction = rec.clone().normal;
         }
-        Some((Ray::new(rec.p.clone(), scatter_direction), self.albedo.clone()))
+        Some((
+            Ray::new(rec.clone().p, scatter_direction),
+            self.albedo.clone(),
+        ))
     }
 }
 
@@ -41,7 +43,10 @@ impl Metal {
 impl Material for Metal {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
         let reflected = reflect(&r_in.dir().unit_vector(), &rec.normal);
-        let scattered = Ray::new(rec.p.clone(), reflected + self.fuzz * random_in_unit_sphere());
+        let scattered = Ray::new(
+            rec.p.clone(),
+            reflected + self.fuzz * random_in_unit_sphere(),
+        );
         let attenuation = self.albedo.clone();
         if scattered.dir().dot(rec.normal.clone()) > 0.0 {
             Some((scattered, attenuation))
@@ -67,7 +72,7 @@ impl Dielectric {
 impl Material for Dielectric {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
         let attenuation = Vec3::ones();
-        let refraction_ratio: f64 = if rec.front_face.clone() {
+        let refraction_ratio: f64 = if rec.clone().front_face {
             1.0 / self.ir
         } else {
             self.ir
@@ -83,7 +88,7 @@ impl Material for Dielectric {
         //     refract(unit_direction,rec.normal,refraction_ratio)
         // };
         // Some((Ray::new(rec.p, direction), attenuation))
-        let refracted=refract(&unit_direction,&rec.normal,refraction_ratio);
-        Some((Ray::new(rec.p.clone(), refracted), attenuation))
+        let refracted = refract(&unit_direction, &rec.clone().normal, refraction_ratio);
+        Some((Ray::new(rec.clone().p, refracted), attenuation))
     }
 }

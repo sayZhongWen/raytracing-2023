@@ -8,7 +8,7 @@ mod rtweekend;
 mod sphere;
 mod vec3;
 
-use std::f64::consts::PI;
+// use std::f64::consts::PI;
 use crate::camera::Camera;
 use crate::hittable::Hit;
 use crate::hittable_list::HittableList;

@@ -1,5 +1,4 @@
-use crate::{ray::*, vec3::*,rtweekend::*};
-use std;
+use crate::{ray::*, vec3::*};
 pub struct Camera {
     origin: Vec3,
     lower_left_corner: Vec3,

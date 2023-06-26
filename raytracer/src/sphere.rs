@@ -27,15 +27,15 @@ impl<M: Material> Hit for Sphere<M> {
             return None;
         }
         let sqrtd = discriminant.sqrt();
-        let root = (-half_b - sqrtd) / a;
+        let mut root = (-half_b - sqrtd) / a;
         if root < t_min || t_max < root {
-            let root = (-half_b + sqrtd) / a;
+            root = (-half_b + sqrtd) / a;
             if root < t_min || t_max < root {
                 return None;
             }
         }
         let p = r.at(root);
         let outward_normal = (p.clone() - self.center.clone()) / self.radius;
-        Some(HitRecord::new(p, root, outward_normal, r, &self.material))
+        Some(HitRecord::new(p, root, &outward_normal, r, &self.material))
     }
 }
