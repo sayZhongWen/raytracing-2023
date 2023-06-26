@@ -1,5 +1,7 @@
 use crate::hittable::HitRecord;
+use crate::rtweekend::random_f64;
 use crate::{ray::*, vec3::*};
+
 //有关生命周期的部分学习了https://zhuanlan.zhihu.com/p/441138623
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)>;
@@ -55,7 +57,7 @@ impl Material for Metal {
         }
     }
 }
-
+#[derive(Clone)]
 pub struct Dielectric {
     pub ir: f64,
 }
@@ -63,11 +65,11 @@ impl Dielectric {
     pub fn new(ir: f64) -> Self {
         Self { ir }
     }
-    // pub fn reflectance(cosine:f64,ref_idx:f64)->f64{
-    //     let r0 = (1.0-ref_idx) / (1.0+ref_idx);
-    //     r0 = r0*r0;
-    //     r0 + (1-r0)*(1.0 - cosine).pow(5)
-    // }
+    pub fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
+        let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        let r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cosine).powf(5.0)
+    }
 }
 impl Material for Dielectric {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
@@ -81,7 +83,9 @@ impl Material for Dielectric {
         let cos_theta: f64 = (-unit_direction.clone()).dot(rec.normal.clone()).min(1.0);
         let sin_theta: f64 = (1.0 - cos_theta * cos_theta).sqrt();
         let cannot_refract: bool = refraction_ratio * sin_theta > 1.0;
-        let direction = if cannot_refract {
+        let direction = if cannot_refract
+            || Dielectric::reflectance(cos_theta, refraction_ratio) > random_f64()
+        {
             reflect(&unit_direction, &rec.normal)
         } else {
             refract(&unit_direction, &rec.normal, refraction_ratio)
