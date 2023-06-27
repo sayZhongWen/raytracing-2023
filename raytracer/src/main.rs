@@ -13,7 +13,7 @@ use crate::hittable::Hit;
 use crate::hittable_list::HittableList;
 pub use crate::ray::Ray;
 use crate::rtweekend::*;
-use crate::sphere::Sphere;
+use crate::sphere::{MovingSphere, Sphere};
 // use std::f64::consts::PI;
 // use crate::vec3::random_in_hemisphere;
 use crate::material::{Dielectric, Lambertian, Metal};
@@ -65,7 +65,15 @@ pub fn random_scene() -> HittableList {
                 if choose_mat < 0.8 {
                     let albedo = Vec3::random_f64() * Vec3::random_f64();
                     let sphere_material = Lambertian::new(&albedo);
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    let center2 = center.clone() + Vec3::new(0.0, random(0.0, 0.5), 0.0);
+                    world.add(Box::new(MovingSphere::new(
+                        center,
+                        center2,
+                        0.0,
+                        1.0,
+                        0.2,
+                        sphere_material,
+                    )));
                 } else if choose_mat < 0.95 {
                     let albedo = Vec3::random(0.5, 1.0);
                     let fuzz = random(0.0, 0.5);
@@ -108,10 +116,10 @@ fn main() {
     let quality = 60; // From 0 to 100, suggested value: 60
 
     //image
-    const ASPECT_RATIO: f64 = 3.0 / 2.0;
-    const IMAGE_WIDTH: usize = 1200;
+    const ASPECT_RATIO: f64 = 16.0 / 9.0;
+    const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: usize = 500;
+    const SAMPLES_PER_PIXEL: usize = 100;
     const MAX_DEPTH: usize = 50;
     let width = IMAGE_WIDTH;
     let height = IMAGE_HEIGHT;
@@ -133,6 +141,8 @@ fn main() {
         ASPECT_RATIO,
         aperture,
         dist_to_focus,
+        0.0,
+        1.0,
     );
 
     // Create image data
