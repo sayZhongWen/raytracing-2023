@@ -1,5 +1,5 @@
 use crate::aabb::AaBb;
-use crate::{aabb, material::*, ray::*, vec3::*};
+use crate::{material::*, ray::*, vec3::*};
 
 pub trait Hit {
     //此处返回Option<HitRecord>的思想改编自助教分享的https://zhuanlan.zhihu.com/p/436876484

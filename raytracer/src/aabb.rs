@@ -19,12 +19,12 @@ impl AaBb {
         let mut t_min = t_min;
         let mut t_max = t_max;
         for a in 0..3 {
-            let inv_d = 1.0 / r.dir()[a]; //1.0f?
+            let inv_d = 1.0 / r.dir()[a];
             let mut t0 = (self.min()[a] - r.orig()[a]) * inv_d;
             let mut t1 = (self.max()[a] - r.orig()[a]) * inv_d;
             if inv_d < 0.0 {
                 swap(&mut t0, &mut t1);
-            } //？
+            }
             t_min = t0.max(t_min);
             t_max = t1.min(t_max);
             if t_max <= t_min {

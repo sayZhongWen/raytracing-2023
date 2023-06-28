@@ -39,26 +39,6 @@ impl Hit for HittableList {
         if self.objects.is_empty() {
             return None;
         }
-        // let mut output_box = AaBb::new(Point3::zero(), Point3::zero());
-        // let mut first_box = true;
-        //
-        // for object in &self.objects {
-        //     let res = object.bounding_box(time0, time1);
-        //     match res {
-        //         Some(temp_box) => {
-        //             output_box = if first_box {
-        //                 temp_box
-        //             } else {
-        //                 surrounding_box(output_box, temp_box)
-        //             };
-        //             first_box = false;
-        //         }
-        //         None => {
-        //             return None;
-        //         }
-        //     }
-        // }
-        // Some(output_box)
         if let Some(mut temp_box) = self.objects[0].bounding_box(time0, time1) {
             let mut output_box = temp_box;
             for a in 1..self.objects.len() {
@@ -74,5 +54,5 @@ impl Hit for HittableList {
         } else {
             None
         }
-    } //自己改写的
+    } //自己改写的方法
 }

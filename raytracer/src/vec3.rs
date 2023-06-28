@@ -1,6 +1,4 @@
 use std::f64;
-// use std::intrinsics::sqrtf64;
-// use std::num;
 use crate::rtweekend::*;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -85,15 +83,6 @@ pub fn random_in_unit_sphere() -> Vec3 {
 pub fn random_unit_vector() -> Vec3 {
     random_in_unit_sphere().unit_vector()
 }
-
-// pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
-//     let in_unit_sphere = random_in_unit_sphere();
-//     if normal.dot(in_unit_sphere.clone()) > 0.0 {
-//         in_unit_sphere
-//     } else {
-//         -in_unit_sphere
-//     }
-// }
 
 pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
     v.clone() - 2.0 * v.dot(n.clone()) * n.clone()

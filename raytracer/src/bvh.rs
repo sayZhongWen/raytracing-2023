@@ -22,21 +22,12 @@ impl BvhNode {
             a.bounding_box(time0, time1).unwrap().min()[axis]
                 .partial_cmp(&b.bounding_box(time0, time1).unwrap().min()[axis])
                 .unwrap()
-        });
-        let mut left = objects[0].clone(); //
+        }); //先sort一下
+        let mut left = objects[0].clone();
         let mut right = objects[0].clone();
         match objects.len() {
             1 => {}
             2 => right = objects[1].clone(),
-            // 2 => {
-            //     if objects[0].bounding_box(time0, time1).unwrap().min()[axis]
-            //         < objects[1].bounding_box(time0, time1).unwrap().min()[axis]
-            //     {
-            //         right = objects[1].clone();
-            //     } else {
-            //         left = objects[1].clone();
-            //     }
-            // }
             _ => {
                 let mut l = objects;
                 let r = l.split_off(l.len() / 2);
@@ -64,20 +55,12 @@ impl Hit for BvhNode {
                     Some(hit_left)
                 } else {
                     Some(hit_right)
-                }
+                } //先碰到左边/右边的光线就取那边的继续找下去
             }
             (Some(hit_left), None) => Some(hit_left),
             (None, Some(hit_right)) => Some(hit_right),
             (None, None) => None,
         }
-        // if let Some(rec) = self.left.hit(r, t_min, t_max) {
-        //     if let Some(rec) = self.right.hit(r, t_min, rec.t) {
-        //         return Some(rec);
-        //     } else if let Some(rec) = self.right.hit(r, t_min, t_max) {
-        //         return Some(rec);
-        //     }
-        // }
-        // None
     }
     fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<AaBb> {
         Some(self.bbox.clone())
