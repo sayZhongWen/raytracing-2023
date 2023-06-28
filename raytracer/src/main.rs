@@ -1,3 +1,5 @@
+mod aabb;
+mod bvh;
 mod camera;
 mod color;
 mod hittable;
@@ -6,22 +8,23 @@ mod material;
 mod ray;
 mod rtweekend;
 mod sphere;
+mod texture;
 mod vec3;
 
+use crate::bvh::BvhNode;
 use crate::camera::Camera;
 use crate::hittable::Hit;
 use crate::hittable_list::HittableList;
+use crate::material::{Dielectric, Lambertian, Metal};
 pub use crate::ray::Ray;
 use crate::rtweekend::*;
 use crate::sphere::{MovingSphere, Sphere};
-// use std::f64::consts::PI;
-// use crate::vec3::random_in_hemisphere;
-use crate::material::{Dielectric, Lambertian, Metal};
 use color::write_color;
+
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::fs::File;
-// use std::intrinsics::{assert_inhabited, cosf64};
+use std::sync::Arc;
 pub use vec3::Vec3;
 
 const AUTHOR: &str = "Dizzy_D";
@@ -34,7 +37,7 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
     if depth <= 0 {
         return Vec3::zero();
     }
-    if let Some(rec) = world.hit(r.clone(), 0.001, f64::INFINITY) {
+    if let Some(rec) = world.hit(&r, 0.001, f64::INFINITY) {
         return if let Some((scattered, attenuation)) = rec.material.scatter(&r, &rec) {
             attenuation * ray_color(scattered, world, depth - 1)
         } else {
@@ -48,7 +51,7 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
 pub fn random_scene() -> HittableList {
     let mut world = HittableList::new();
     let ground_material = Lambertian::new(&Vec3::new(0.5, 0.5, 0.5));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
         ground_material,
@@ -66,7 +69,7 @@ pub fn random_scene() -> HittableList {
                     let albedo = Vec3::random_f64() * Vec3::random_f64();
                     let sphere_material = Lambertian::new(&albedo);
                     let center2 = center.clone() + Vec3::new(0.0, random(0.0, 0.5), 0.0);
-                    world.add(Box::new(MovingSphere::new(
+                    world.add(Arc::new(MovingSphere::new(
                         center,
                         center2,
                         0.0,
@@ -78,28 +81,28 @@ pub fn random_scene() -> HittableList {
                     let albedo = Vec3::random(0.5, 1.0);
                     let fuzz = random(0.0, 0.5);
                     let sphere_material = Metal::new(&albedo, fuzz);
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Arc::new(Sphere::new(center, 0.2, sphere_material)));
                 } else {
                     let sphere_material = Dielectric::new(1.5);
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Arc::new(Sphere::new(center, 0.2, sphere_material)));
                 }
             }
         }
     }
     let material1 = Dielectric::new(1.5);
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(0.0, 1.0, 0.0),
         1.0,
         material1,
     )));
     let material2 = Lambertian::new(&Vec3::new(0.4, 0.2, 0.1));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
         1.0,
         material2,
     )));
     let material3 = Metal::new(&Vec3::new(0.7, 0.6, 0.5), 0.0);
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Vec3::new(4.0, 1.0, 0.0),
         1.0,
         material3,
@@ -125,7 +128,7 @@ fn main() {
     let height = IMAGE_HEIGHT;
 
     //world
-    let world = random_scene();
+    let world = BvhNode::newnew(random_scene(), 0.0, 1.0);
 
     //camera
     let lookfrom = Vec3::new(13.0, 2.0, 3.0);
@@ -164,7 +167,7 @@ fn main() {
                 let u = (i as f64 + random_f64()) / ((width - 1) as f64);
                 let v = (j as f64 + random_f64()) / ((height - 1) as f64);
                 let r = cam.get_ray(u, v);
-                color += ray_color(r, &world, MAX_DEPTH as i32);
+                color += ray_color(r, &*world, MAX_DEPTH as i32);
             }
             let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
             let r = (color.x() * scale).sqrt();

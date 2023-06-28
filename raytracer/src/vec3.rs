@@ -2,7 +2,7 @@ use std::f64;
 // use std::intrinsics::sqrtf64;
 // use std::num;
 use crate::rtweekend::*;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Debug, PartialEq)]
 
@@ -257,6 +257,19 @@ impl Neg for Vec3 {
         }
     }
 }
+impl Index<i32> for Vec3 {
+    type Output = f64;
+    fn index(&self, index: i32) -> &f64 {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => &0.0,
+        }
+    }
+}
+pub type Point3 = Vec3;
+pub type Color = Vec3;
 
 #[cfg(test)]
 mod tests {

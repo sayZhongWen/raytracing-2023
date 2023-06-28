@@ -18,3 +18,6 @@ pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
     }
     x
 }
+pub fn random_i32(min: i32, max: i32) -> i32 {
+    random(min as f64, max as f64) as i32
+}
