@@ -170,10 +170,10 @@ fn main() {
     let height = IMAGE_HEIGHT;
 
     //world
-    let mut obj = HittableList::new();
-    let mut lookfrom = Point3::zero();
-    let mut lookat = Point3::zero();
-    let mut vfov = 40.0;
+    let obj;
+    let lookfrom;
+    let lookat;
+    let vfov;
     let mut aperture = 0.0;
     let mode = 0;
     match mode {

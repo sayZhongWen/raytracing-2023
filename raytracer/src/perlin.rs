@@ -35,8 +35,8 @@ impl Perlin {
 
     fn perlin_generate_perm() -> Vec<i32> {
         let mut p = vec![0; POINT_COUNT];
-        for i in 0..POINT_COUNT {
-            p[i] = i as i32;
+        for (i, value) in p.iter_mut().enumerate().take(POINT_COUNT) {
+            *value = i as i32;
         }
         Perlin::permute(&mut p, POINT_COUNT);
         p
