@@ -5,6 +5,7 @@ mod color;
 mod hittable;
 mod hittable_list;
 mod material;
+mod perlin;
 mod ray;
 mod rtweekend;
 mod sphere;
@@ -21,7 +22,7 @@ use crate::rtweekend::*;
 use crate::sphere::{MovingSphere, Sphere};
 use color::write_color;
 
-use crate::texture::CheckerTexture;
+use crate::texture::{CheckerTexture, NoiseTexture};
 use crate::vec3::{Color, Point3};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -50,6 +51,7 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
 }
+
 pub fn random_scene() -> HittableList {
     let mut world = HittableList::new();
     let checker = Arc::new(CheckerTexture::new_color(
@@ -114,6 +116,41 @@ pub fn random_scene() -> HittableList {
     )));
     world
 }
+
+fn two_spheres() -> HittableList {
+    let checker = Arc::new(CheckerTexture::new_color(
+        Color::new(0.9, 0.9, 0.9),
+        Color::new(0.2, 0.3, 0.1),
+    ));
+    let mut objects = HittableList::new();
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0.0, -10.0, 0.0),
+        10.0,
+        Lambertian::new_arc(checker.clone()),
+    )));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0.0, 10.0, 0.0),
+        10.0,
+        Lambertian::new_arc(checker),
+    )));
+    objects
+}
+fn two_perlin_spheres() -> HittableList {
+    let mut obj = HittableList::new();
+    let pertext = Arc::new(NoiseTexture::new());
+    // let pertext2 = Arc::new(NoiseTexture::new());
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Lambertian::new_arc(pertext.clone()),
+    )));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(0.0, 2.0, 0.0),
+        2.0,
+        Lambertian::new_arc(pertext),
+    )));
+    obj
+}
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -133,19 +170,43 @@ fn main() {
     let height = IMAGE_HEIGHT;
 
     //world
-    let world = BvhNode::newnew(random_scene(), 0.0, 1.0);
+    let mut obj = HittableList::new();
+    let mut lookfrom = Point3::zero();
+    let mut lookat = Point3::zero();
+    let mut vfov = 40.0;
+    let mut aperture = 0.0;
+    let mode = 0;
+    match mode {
+        1 => {
+            obj = random_scene();
+            lookfrom = Point3::new(13.0, 2.0, 3.0);
+            lookat = Point3::new(0.0, 0.0, 0.0);
+            vfov = 20.0;
+            aperture = 0.1;
+        }
+        2 => {
+            obj = two_spheres();
+            lookfrom = Point3::new(13.0, 2.0, 3.0);
+            lookat = Point3::new(0.0, 0.0, 0.0);
+            vfov = 20.0;
+        }
+        _ => {
+            obj = two_perlin_spheres();
+            lookfrom = Point3::new(13.0, 2.0, 3.0);
+            lookat = Point3::new(0.0, 0.0, 0.0);
+            vfov = 20.0;
+        }
+    }
+    let world = BvhNode::newnew(obj, 0.0, 1.0);
 
     //camera
-    let lookfrom = Vec3::new(13.0, 2.0, 3.0);
-    let lookat = Vec3::new(0.0, 0.0, 0.0);
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
-    let aperture = 0.1;
     let cam = Camera::new(
         lookfrom,
         lookat,
         vup,
-        20.0,
+        vfov,
         ASPECT_RATIO,
         aperture,
         dist_to_focus,
