@@ -22,7 +22,7 @@ use crate::rtweekend::*;
 use crate::sphere::{MovingSphere, Sphere};
 use color::write_color;
 
-use crate::texture::{CheckerTexture, NoiseTexture};
+use crate::texture::{CheckerTexture, ImageTexture, NoiseTexture};
 use crate::vec3::{Color, Point3};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -150,6 +150,22 @@ fn two_perlin_spheres() -> HittableList {
     )));
     obj
 }
+fn earth() -> HittableList {
+    let img = image::open("earthmap.jpg")
+        .expect("Could not find the image")
+        .to_rgb8();
+    let (width, height) = img.dimensions();
+    let data = img.as_raw();
+    let earth_texture = ImageTexture::new(data.clone(), width as usize, height as usize);
+    let mut obj = HittableList::new();
+    let earth_surface = Lambertian::new_arc(Arc::new(earth_texture));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(0.0, 0.0, 0.0),
+        2.0,
+        earth_surface,
+    )));
+    obj
+}
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -189,8 +205,14 @@ fn main() {
             lookat = Point3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
         }
-        _ => {
+        3 => {
             obj = two_perlin_spheres();
+            lookfrom = Point3::new(13.0, 2.0, 3.0);
+            lookat = Point3::new(0.0, 0.0, 0.0);
+            vfov = 20.0;
+        }
+        _ => {
+            obj = earth();
             lookfrom = Point3::new(13.0, 2.0, 3.0);
             lookat = Point3::new(0.0, 0.0, 0.0);
             vfov = 20.0;
