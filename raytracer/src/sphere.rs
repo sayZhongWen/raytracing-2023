@@ -1,7 +1,7 @@
 use crate::aabb::*;
 use crate::material::Material;
 use crate::{hittable::*, vec3::*, Ray};
-// use std::f64::consts::PI;
+use std::f64::consts::PI;
 
 #[derive(Clone)]
 pub struct Sphere<M: Material> {
@@ -18,11 +18,11 @@ impl<M: Material> Sphere<M> {
         }
     }
 }
-// pub fn get_sphere_uv(p: &Point3) -> (f64, f64) {
-//     let theta = (-p.y()).acos();
-//     let phi = (-p.z()).atan2(p.x()) + PI;
-//     (phi / (2.0 * PI), theta / PI)
-// }
+pub fn get_sphere_uv(p: &Point3) -> (f64, f64) {
+    let theta = (-p.y()).acos();
+    let phi = (-p.z()).atan2(p.x()) + PI;
+    (phi / (2.0 * PI), theta / PI)
+}
 impl<M: Material> Hit for Sphere<M> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = r.orig() - self.center.clone();
@@ -43,12 +43,12 @@ impl<M: Material> Hit for Sphere<M> {
         }
         let p = r.at(root);
         let outward_normal = (p.clone() - self.center.clone()) / self.radius;
-        // let (u, v) = get_sphere_uv(&outward_normal);
+        let (u, v) = get_sphere_uv(&outward_normal);
         Some(HitRecord::new(
             p,
             root,
-            // u,
-            // v,
+            u,
+            v,
             &outward_normal,
             r.clone(),
             &self.material,
@@ -114,9 +114,12 @@ impl<M: Material> Hit for MovingSphere<M> {
         }
         let p = r.at(root);
         let outward_normal = (p.clone() - self.center(r.time())) / self.radius;
+        let (u, v) = get_sphere_uv(&outward_normal);
         Some(HitRecord::new(
             p,
             root,
+            u,
+            v,
             &outward_normal,
             r.clone(),
             &self.material,

@@ -21,6 +21,8 @@ use crate::rtweekend::*;
 use crate::sphere::{MovingSphere, Sphere};
 use color::write_color;
 
+use crate::texture::CheckerTexture;
+use crate::vec3::{Color, Point3};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::fs::File;
@@ -50,11 +52,14 @@ fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
 }
 pub fn random_scene() -> HittableList {
     let mut world = HittableList::new();
-    let ground_material = Lambertian::new(&Vec3::new(0.5, 0.5, 0.5));
+    let checker = Arc::new(CheckerTexture::new_color(
+        Color::new(0.9, 0.9, 0.9),
+        Color::new(0.2, 0.3, 0.1),
+    ));
     world.add(Arc::new(Sphere::new(
-        Vec3::new(0.0, -1000.0, 0.0),
+        Point3::new(0.0, -1000.0, 0.0),
         1000.0,
-        ground_material,
+        Lambertian::new_arc(checker),
     )));
     for a in -11..11 {
         for b in -11..11 {
@@ -67,7 +72,7 @@ pub fn random_scene() -> HittableList {
             if (center.clone() - Vec3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     let albedo = Vec3::random_f64() * Vec3::random_f64();
-                    let sphere_material = Lambertian::new(&albedo);
+                    let sphere_material = Lambertian::new_color(albedo);
                     let center2 = center.clone() + Vec3::new(0.0, random(0.0, 0.5), 0.0);
                     world.add(Arc::new(MovingSphere::new(
                         center,
@@ -95,7 +100,7 @@ pub fn random_scene() -> HittableList {
         1.0,
         material1,
     )));
-    let material2 = Lambertian::new(&Vec3::new(0.4, 0.2, 0.1));
+    let material2 = Lambertian::new_color(Color::new(0.4, 0.2, 0.1));
     world.add(Arc::new(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
         1.0,

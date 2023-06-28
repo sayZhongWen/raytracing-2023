@@ -1,31 +1,35 @@
 use crate::hittable::HitRecord;
 use crate::rtweekend::random_f64;
-use crate::{ray::*, vec3::*};
+use crate::{ray::*, texture::*, vec3::*};
+use std::sync::Arc;
 
 //有关生命周期的部分学习了https://zhuanlan.zhihu.com/p/441138623
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)>;
 }
 pub struct Lambertian {
-    pub albedo: Vec3,
+    pub albedo: Arc<dyn Texture>,
 }
 
 impl Lambertian {
-    pub fn new(albedo: &Vec3) -> Self {
+    pub fn new_color(a: Color) -> Self {
         Self {
-            albedo: Vec3::new(albedo.x(), albedo.y(), albedo.z()),
+            albedo: Arc::new(SolidColor::new(a)),
         }
+    }
+    pub fn new_arc(a: Arc<dyn Texture>) -> Self {
+        Self { albedo: a }
     }
 }
 impl Material for Lambertian {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)> {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
         let mut scatter_direction = rec.normal.clone() + random_unit_vector();
         if scatter_direction.near_zero() {
             scatter_direction = rec.clone().normal;
         }
         Some((
             Ray::new(rec.p.clone(), scatter_direction, r_in.time()),
-            self.albedo.clone(),
+            self.albedo.value(rec.u, rec.v, &rec.p),
         ))
     }
 }
