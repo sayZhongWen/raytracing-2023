@@ -1,5 +1,5 @@
 use crate::aabb::{surrounding_box, AaBb};
-use crate::{hittable::*, ray::*, vec3::*};
+use crate::{hittable::*, ray::*};
 use std::sync::Arc;
 
 pub struct HittableList {

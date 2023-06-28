@@ -1,5 +1,5 @@
-use std::f64;
 use crate::rtweekend::*;
+use std::f64;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -257,8 +257,8 @@ impl Index<i32> for Vec3 {
         }
     }
 }
-pub type Point3 = Vec3;
-pub type Color = Vec3;
+// pub type Point3 = Vec3;
+// pub type Color = Vec3;
 
 #[cfg(test)]
 mod tests {
