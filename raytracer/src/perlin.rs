@@ -5,7 +5,7 @@ use crate::Vec3;
 const POINT_COUNT: usize = 256;
 
 pub struct Perlin {
-    ranfloat: Vec<f64>,
+    // ranfloat: Vec<f64>,
     ranvec: Vec<Vec3>,
     perm_x: Vec<i32>,
     perm_y: Vec<i32>,
@@ -14,14 +14,14 @@ pub struct Perlin {
 
 impl Perlin {
     pub fn new() -> Self {
-        let mut ranfloat = Vec::new();
+        // let mut ranfloat = Vec::new();
         let mut ranvec = Vec::new();
         for _ in 0..POINT_COUNT {
-            ranfloat.push(random_f64());
+            // ranfloat.push(random_f64());
             ranvec.push(Vec3::random(-1.0, 1.0).unit_vector());
         }
         Self {
-            ranfloat,
+            // ranfloat,
             ranvec,
             perm_x: Perlin::perlin_generate_perm(),
             perm_y: Perlin::perlin_generate_perm(),
