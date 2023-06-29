@@ -1,5 +1,8 @@
+extern crate core;
+
 mod aabb;
 mod aarect;
+mod r#box;
 mod bvh;
 mod camera;
 mod color;
@@ -15,7 +18,7 @@ mod vec3;
 
 use crate::bvh::BvhNode;
 use crate::camera::Camera;
-use crate::hittable::Hit;
+use crate::hittable::{Hit, RotateY, Translate};
 use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Metal};
 pub use crate::ray::Ray;
@@ -24,6 +27,7 @@ use crate::sphere::{MovingSphere, Sphere};
 use color::write_color;
 
 use crate::aarect::{XYRect, XZRect, YZRect};
+use crate::r#box::Bbox;
 use crate::texture::{CheckerTexture, ImageTexture, NoiseTexture};
 use crate::vec3::{Color, Point3};
 use image::{ImageBuffer, RgbImage};
@@ -217,7 +221,35 @@ fn cornell_box() -> HittableList {
         555.0,
         555.0,
     )));
-    obj.add(Arc::new(XYRect::new(white, 0.0, 555.0, 0.0, 555.0, 555.0)));
+    obj.add(Arc::new(XYRect::new(
+        white.clone(),
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+    )));
+    let box1 = Arc::new(Translate::new(
+        Arc::new(RotateY::new(
+            Arc::new(Bbox::new(
+                &Point3::zero(),
+                &Point3::new(165.0, 330.0, 165.0),
+                white.clone(),
+            )),
+            15.0,
+        )),
+        Vec3::new(265.0, 0.0, 295.0),
+    ));
+    obj.add(box1);
+
+    let box2 = Arc::new(Bbox::new(
+        &Point3::zero(),
+        &Point3::new(165.0, 165.0, 165.0),
+        white,
+    ));
+    let box2 = Arc::new(RotateY::new(box2, -18.0));
+    let box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+    obj.add(box2);
     obj
 }
 fn main() {

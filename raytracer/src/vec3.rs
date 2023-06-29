@@ -1,6 +1,8 @@
 use crate::rtweekend::*;
 use std::f64;
-use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 
@@ -253,7 +255,17 @@ impl Index<i32> for Vec3 {
             0 => &self.x,
             1 => &self.y,
             2 => &self.z,
-            _ => &0.0,
+            _ => panic!("Index out of bound!"),
+        }
+    }
+}
+impl IndexMut<i32> for Vec3 {
+    fn index_mut(&mut self, index: i32) -> &mut Self::Output {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("Index out of bound!"),
         }
     }
 }
