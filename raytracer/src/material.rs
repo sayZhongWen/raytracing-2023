@@ -6,6 +6,9 @@ use std::sync::Arc;
 //有关生命周期的部分学习了https://zhuanlan.zhihu.com/p/441138623
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)>;
+    fn emitted(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
+        Color::zero()
+    }
 }
 pub struct Lambertian {
     pub albedo: Arc<dyn Texture>,
@@ -96,5 +99,27 @@ impl Material for Dielectric {
             refract(&unit_direction, &rec.normal, refraction_ratio)
         };
         Some((Ray::new(rec.p.clone(), direction, r_in.time()), attenuation))
+    }
+}
+
+pub struct DiffuseLight {
+    emit: Arc<dyn Texture>,
+}
+impl DiffuseLight {
+    pub fn new_arc(emit: Arc<dyn Texture>) -> Self {
+        Self { emit }
+    }
+    pub fn new_color(c: Color) -> Self {
+        Self {
+            emit: Arc::new(SolidColor::new(c)),
+        }
+    }
+}
+impl Material for DiffuseLight {
+    fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Vec3)> {
+        None
+    }
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
+        self.emit.value(u, v, p)
     }
 }

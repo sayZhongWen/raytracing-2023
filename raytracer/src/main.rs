@@ -1,4 +1,5 @@
 mod aabb;
+mod aarect;
 mod bvh;
 mod camera;
 mod color;
@@ -16,12 +17,13 @@ use crate::bvh::BvhNode;
 use crate::camera::Camera;
 use crate::hittable::Hit;
 use crate::hittable_list::HittableList;
-use crate::material::{Dielectric, Lambertian, Metal};
+use crate::material::{Dielectric, DiffuseLight, Lambertian, Metal};
 pub use crate::ray::Ray;
 use crate::rtweekend::*;
 use crate::sphere::{MovingSphere, Sphere};
 use color::write_color;
 
+use crate::aarect::XYRect;
 use crate::texture::{CheckerTexture, ImageTexture, NoiseTexture};
 use crate::vec3::{Color, Point3};
 use image::{ImageBuffer, RgbImage};
@@ -36,20 +38,20 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
-fn ray_color(r: Ray, world: &dyn Hit, depth: i32) -> Vec3 {
+fn ray_color(r: Ray, background: &Color, world: &dyn Hit, depth: i32) -> Color {
     if depth <= 0 {
         return Vec3::zero();
     }
-    if let Some(rec) = world.hit(&r, 0.001, f64::INFINITY) {
-        return if let Some((scattered, attenuation)) = rec.material.scatter(&r, &rec) {
-            attenuation * ray_color(scattered, world, depth - 1)
+    return if let Some(rec) = world.hit(&r, 0.001, f64::INFINITY) {
+        let emitted = rec.material.emitted(rec.u, rec.v, &rec.p);
+        if let Some((scattered, attenuation)) = rec.material.scatter(&r, &rec) {
+            emitted + attenuation * ray_color(scattered, background, world, depth - 1)
         } else {
-            Vec3::zero()
-        };
-    }
-    let unit_direction: Vec3 = r.dir().unit_vector();
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    (1.0 - t) * Vec3::new(1.0, 1.0, 1.0) + t * Vec3::new(0.5, 0.7, 1.0)
+            emitted
+        }
+    } else {
+        background.clone()
+    };
 }
 
 pub fn random_scene() -> HittableList {
@@ -166,6 +168,28 @@ fn earth() -> HittableList {
     )));
     obj
 }
+fn simple_light() -> HittableList {
+    let mut obj = HittableList::new();
+    let pertext = Arc::new(NoiseTexture::new(4.0));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Lambertian::new_arc(pertext.clone()),
+    )));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(0.0, 2.0, 0.0),
+        2.0,
+        Lambertian::new_arc(pertext),
+    )));
+    let difflight = Arc::new(DiffuseLight::new_color(Color::new(4.0, 4.0, 4.0)));
+    obj.add(Arc::new(XYRect::new(difflight, 3.0, 5.0, 1.0, 3.0, -2.0)));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(0.0, 7.0, 0.0),
+        2.0,
+        DiffuseLight::new_color(Color::new(4.0, 4.0, 4.0)),
+    )));
+    obj
+}
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -179,7 +203,7 @@ fn main() {
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: usize = 400;
     const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
-    const SAMPLES_PER_PIXEL: usize = 100;
+    let mut samples_per_pixel: usize = 100;
     const MAX_DEPTH: usize = 50;
     let width = IMAGE_WIDTH;
     let height = IMAGE_HEIGHT;
@@ -190,12 +214,14 @@ fn main() {
     let lookat;
     let vfov;
     let mut aperture = 0.0;
+    let background;
     let mode = 0;
     match mode {
         1 => {
             obj = random_scene();
             lookfrom = Point3::new(13.0, 2.0, 3.0);
             lookat = Point3::new(0.0, 0.0, 0.0);
+            background = Color::new(0.7, 0.8, 1.0);
             vfov = 20.0;
             aperture = 0.1;
         }
@@ -203,18 +229,29 @@ fn main() {
             obj = two_spheres();
             lookfrom = Point3::new(13.0, 2.0, 3.0);
             lookat = Point3::new(0.0, 0.0, 0.0);
+            background = Color::new(0.7, 0.8, 1.0);
             vfov = 20.0;
         }
         3 => {
             obj = two_perlin_spheres();
             lookfrom = Point3::new(13.0, 2.0, 3.0);
             lookat = Point3::new(0.0, 0.0, 0.0);
+            background = Color::new(0.7, 0.8, 1.0);
             vfov = 20.0;
         }
-        _ => {
+        4 => {
             obj = earth();
             lookfrom = Point3::new(13.0, 2.0, 3.0);
             lookat = Point3::new(0.0, 0.0, 0.0);
+            background = Color::new(0.7, 0.8, 1.0);
+            vfov = 20.0;
+        }
+        _ => {
+            obj = simple_light();
+            samples_per_pixel = 400;
+            background = Color::zero();
+            lookfrom = Point3::new(26.0, 3.0, 6.0);
+            lookat = Point3::new(0.0, 2.0, 0.0);
             vfov = 20.0;
         }
     }
@@ -250,13 +287,13 @@ fn main() {
     for j in 0..height {
         for i in 0..width {
             let mut color = Vec3::new(0.0, 0.0, 0.0);
-            for _s in 0..SAMPLES_PER_PIXEL {
+            for _s in 0..samples_per_pixel {
                 let u = (i as f64 + random_f64()) / ((width - 1) as f64);
                 let v = (j as f64 + random_f64()) / ((height - 1) as f64);
                 let r = cam.get_ray(u, v);
-                color += ray_color(r, &*world, MAX_DEPTH as i32);
+                color += ray_color(r, &background, &*world, MAX_DEPTH as i32);
             }
-            let scale = 1.0 / SAMPLES_PER_PIXEL as f64;
+            let scale = 1.0 / samples_per_pixel as f64;
             let r = (color.x() * scale).sqrt();
             let g = (color.y() * scale).sqrt();
             let b = (color.z() * scale).sqrt();
