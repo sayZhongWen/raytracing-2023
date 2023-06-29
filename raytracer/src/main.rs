@@ -23,7 +23,7 @@ use crate::rtweekend::*;
 use crate::sphere::{MovingSphere, Sphere};
 use color::write_color;
 
-use crate::aarect::XYRect;
+use crate::aarect::{XYRect, XZRect, YZRect};
 use crate::texture::{CheckerTexture, ImageTexture, NoiseTexture};
 use crate::vec3::{Color, Point3};
 use image::{ImageBuffer, RgbImage};
@@ -190,6 +190,36 @@ fn simple_light() -> HittableList {
     )));
     obj
 }
+fn cornell_box() -> HittableList {
+    let mut obj = HittableList::new();
+    let red = Arc::new(Lambertian::new_color(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new_color(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new_color(Color::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new_color(Color::new(15.0, 15.0, 15.0)));
+    obj.add(Arc::new(YZRect::new(green, 0.0, 555.0, 0.0, 555.0, 555.0)));
+    obj.add(Arc::new(YZRect::new(red, 0.0, 555.0, 0.0, 555.0, 0.0)));
+    obj.add(Arc::new(XZRect::new(
+        light, 213.0, 343.0, 227.0, 332.0, 554.0,
+    )));
+    obj.add(Arc::new(XZRect::new(
+        white.clone(),
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+    )));
+    obj.add(Arc::new(XZRect::new(
+        white.clone(),
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+    )));
+    obj.add(Arc::new(XYRect::new(white, 0.0, 555.0, 0.0, 555.0, 555.0)));
+    obj
+}
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -202,11 +232,11 @@ fn main() {
     //image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: usize = 400;
-    const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
+    // const IMAGE_HEIGHT: usize = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as usize;
     let mut samples_per_pixel: usize = 100;
     const MAX_DEPTH: usize = 50;
-    let width = IMAGE_WIDTH;
-    let height = IMAGE_HEIGHT;
+    let mut width = IMAGE_WIDTH;
+    let mut aspect_ratio = ASPECT_RATIO;
 
     //world
     let obj;
@@ -246,7 +276,7 @@ fn main() {
             background = Color::new(0.7, 0.8, 1.0);
             vfov = 20.0;
         }
-        _ => {
+        5 => {
             obj = simple_light();
             samples_per_pixel = 400;
             background = Color::zero();
@@ -254,9 +284,19 @@ fn main() {
             lookat = Point3::new(0.0, 2.0, 0.0);
             vfov = 20.0;
         }
+        _ => {
+            obj = cornell_box();
+            aspect_ratio = 1.0;
+            width = 600;
+            samples_per_pixel = 200;
+            background = Color::zero();
+            lookfrom = Point3::new(278.0, 278.0, -800.0);
+            lookat = Point3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
+        }
     }
     let world = BvhNode::newnew(obj, 0.0, 1.0);
-
+    let height = (width as f64 / aspect_ratio) as usize;
     //camera
     let vup = Vec3::new(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
@@ -265,7 +305,7 @@ fn main() {
         lookat,
         vup,
         vfov,
-        ASPECT_RATIO,
+        aspect_ratio,
         aperture,
         dist_to_focus,
         0.0,
