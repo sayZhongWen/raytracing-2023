@@ -9,6 +9,7 @@ mod color;
 mod hittable;
 mod hittable_list;
 mod material;
+mod medium;
 mod perlin;
 mod ray;
 mod rtweekend;
@@ -27,6 +28,7 @@ use crate::sphere::{MovingSphere, Sphere};
 use color::write_color;
 
 use crate::aarect::{XYRect, XZRect, YZRect};
+use crate::medium::ConstantMedium;
 use crate::r#box::Bbox;
 use crate::texture::{CheckerTexture, ImageTexture, NoiseTexture};
 use crate::vec3::{Color, Point3};
@@ -157,12 +159,7 @@ fn two_perlin_spheres() -> HittableList {
     obj
 }
 fn earth() -> HittableList {
-    let img = image::open("earthmap.jpg")
-        .expect("Could not find the image")
-        .to_rgb8();
-    let (width, height) = img.dimensions();
-    let data = img.as_raw();
-    let earth_texture = ImageTexture::new(data.clone(), width as usize, height as usize);
+    let earth_texture = ImageTexture::new();
     let mut obj = HittableList::new();
     let earth_surface = Lambertian::new_arc(Arc::new(earth_texture));
     obj.add(Arc::new(Sphere::new(
@@ -252,6 +249,163 @@ fn cornell_box() -> HittableList {
     obj.add(box2);
     obj
 }
+fn cornell_smoke() -> HittableList {
+    let mut obj = HittableList::new();
+    let red = Arc::new(Lambertian::new_color(Color::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new_color(Color::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new_color(Color::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new_color(Color::new(15.0, 15.0, 15.0)));
+    obj.add(Arc::new(YZRect::new(green, 0.0, 555.0, 0.0, 555.0, 555.0)));
+    obj.add(Arc::new(YZRect::new(red, 0.0, 555.0, 0.0, 555.0, 0.0)));
+    obj.add(Arc::new(XZRect::new(
+        light, 213.0, 343.0, 227.0, 332.0, 554.0,
+    )));
+    obj.add(Arc::new(XZRect::new(
+        white.clone(),
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+    )));
+    obj.add(Arc::new(XZRect::new(
+        white.clone(),
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+    )));
+    obj.add(Arc::new(XYRect::new(
+        white.clone(),
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+    )));
+    let box1 = Arc::new(Translate::new(
+        Arc::new(RotateY::new(
+            Arc::new(Bbox::new(
+                &Point3::zero(),
+                &Point3::new(165.0, 330.0, 165.0),
+                white.clone(),
+            )),
+            15.0,
+        )),
+        Vec3::new(265.0, 0.0, 295.0),
+    ));
+
+    let box2 = Arc::new(Bbox::new(
+        &Point3::zero(),
+        &Point3::new(165.0, 165.0, 165.0),
+        white,
+    ));
+    let box2 = Arc::new(RotateY::new(box2, -18.0));
+    let box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+    obj.add(Arc::new(ConstantMedium::new_color(
+        box1,
+        0.01,
+        Color::zero(),
+    )));
+    obj.add(Arc::new(ConstantMedium::new_color(
+        box2,
+        0.01,
+        Color::ones(),
+    )));
+    obj
+}
+fn final_scene() -> HittableList {
+    let mut boxes1 = HittableList::new();
+    let ground = Arc::new(Lambertian::new_color(Color::new(0.48, 0.83, 0.53)));
+    let boxes_per_side = 20;
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.0;
+            let x0 = -1000.0 + i as f64 * w;
+            let z0 = -1000.0 + j as f64 * w;
+            let y0 = 0.0;
+            let x1 = x0 + w;
+            let y1 = random(1.0, 101.0);
+            let z1 = z0 + w;
+            boxes1.add(Arc::new(Bbox::new(
+                &Point3::new(x0, y0, z0),
+                &Point3::new(x1, y1, z1),
+                ground.clone(),
+            )));
+        }
+    }
+    let mut obj = HittableList::new();
+    obj.add(BvhNode::newnew(boxes1, 0.0, 1.0));
+    let light = Arc::new(DiffuseLight::new_color(Color::new(7.0, 7.0, 7.0)));
+    obj.add(Arc::new(XZRect::new(
+        light, 123.0, 423.0, 147.0, 412.0, 554.0,
+    )));
+    let center1 = Point3::new(400.0, 400.0, 400.0);
+    let center2 = center1.clone() + Vec3::new(30.0, 0.0, 0.0);
+    let moving_sphere_material = Lambertian::new_color(Color::new(0.7, 0.3, 0.1));
+    obj.add(Arc::new(MovingSphere::new(
+        center1,
+        center2,
+        0.0,
+        1.0,
+        50.0,
+        moving_sphere_material,
+    )));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(260.0, 150.0, 45.0),
+        50.0,
+        Dielectric::new(1.5),
+    )));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(0.0, 150.0, 145.0),
+        50.0,
+        Metal::new(&Color::new(0.8, 0.8, 0.8), 1.0),
+    )));
+    let mut boundary = Arc::new(Sphere::new(
+        Point3::new(360.0, 150.0, 145.0),
+        70.0,
+        Dielectric::new(1.05),
+    ));
+    obj.add(boundary.clone());
+    obj.add(Arc::new(ConstantMedium::new_color(
+        boundary,
+        0.2,
+        Color::new(0.2, 0.4, 0.9),
+    )));
+    boundary = Arc::new(Sphere::new(Point3::zero(), 5000.0, Dielectric::new(1.5)));
+    obj.add(Arc::new(ConstantMedium::new_color(
+        boundary,
+        0.0001,
+        Color::ones(),
+    )));
+    let emat = Lambertian::new_arc(Arc::new(ImageTexture::new()));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(400.0, 200.0, 400.0),
+        100.0,
+        emat,
+    )));
+    let pertext = Arc::new(NoiseTexture::new(0.1));
+    obj.add(Arc::new(Sphere::new(
+        Point3::new(220.0, 280.0, 300.0),
+        80.0,
+        Lambertian::new_arc(pertext),
+    )));
+    let mut boxes2 = HittableList::new();
+    let ns = 1000;
+    for _ in 0..ns {
+        boxes2.add(Arc::new(Sphere::new(
+            Point3::random(0.0, 165.0),
+            10.0,
+            Lambertian::new_color(Color::new(0.73, 0.73, 0.73)),
+        )));
+    }
+    obj.add(Arc::new(Translate::new(
+        Arc::new(RotateY::new(BvhNode::newnew(boxes2, 0.0, 1.0), 15.0)),
+        Vec3::new(-100.0, 270.0, 395.0),
+    )));
+    obj
+}
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -316,13 +470,33 @@ fn main() {
             lookat = Point3::new(0.0, 2.0, 0.0);
             vfov = 20.0;
         }
-        _ => {
+        6 => {
             obj = cornell_box();
             aspect_ratio = 1.0;
             width = 600;
             samples_per_pixel = 200;
             background = Color::zero();
             lookfrom = Point3::new(278.0, 278.0, -800.0);
+            lookat = Point3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
+        }
+        7 => {
+            obj = cornell_smoke();
+            aspect_ratio = 1.0;
+            width = 600;
+            samples_per_pixel = 200;
+            background = Color::zero();
+            lookfrom = Point3::new(278.0, 278.0, -800.0);
+            lookat = Point3::new(278.0, 278.0, 0.0);
+            vfov = 40.0;
+        }
+        _ => {
+            obj = final_scene();
+            aspect_ratio = 1.0;
+            width = 800;
+            samples_per_pixel = 10000;
+            background = Color::zero();
+            lookfrom = Point3::new(478.0, 278.0, -600.0);
             lookat = Point3::new(278.0, 278.0, 0.0);
             vfov = 40.0;
         }

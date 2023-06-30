@@ -80,12 +80,17 @@ pub struct ImageTexture {
 }
 impl ImageTexture {
     const BYTES_PER_PIXEL: usize = 3;
-    pub fn new(data: Vec<u8>, width: usize, height: usize) -> Self {
+    pub fn new() -> Self {
+        let img = image::open("earthmap.jpg")
+            .expect("Could not find the image")
+            .to_rgb8();
+        let (width, height) = img.dimensions();
+        let data = img.as_raw();
         Self {
-            data,
-            width,
-            height,
-            bytes_per_scanline: ImageTexture::BYTES_PER_PIXEL * width,
+            data: data.clone(),
+            width: width as usize,
+            height: height as usize,
+            bytes_per_scanline: ImageTexture::BYTES_PER_PIXEL * width as usize,
         }
     }
 }
