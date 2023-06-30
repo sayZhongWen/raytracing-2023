@@ -524,7 +524,7 @@ fn main() {
     );
 
     // Create image data
-    // let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
+    // let mut img = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
 
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful
@@ -534,8 +534,8 @@ fn main() {
     let bar = if is_ci {
         ProgressBar::hidden()
     } else {
-        // ProgressBar::new((height * width) as u64)
-        ProgressBar::new(sections as u64)
+        ProgressBar::new((height * width) as u64)
+        // ProgressBar::new(sections as u64)
     };
 
     let (sender, receiver) = channel();
@@ -567,7 +567,6 @@ fn main() {
                         (256.0 * clamp(g, 0.0, 0.999)) as u8,
                         (256.0 * clamp(b, 0.0, 0.999)) as u8,
                     ];
-
                     write_color(pixel_color, &mut res, i, img_j);
                 }
             }
@@ -582,9 +581,9 @@ fn main() {
             for col in 0..width {
                 *img.get_pixel_mut(col as u32, (height - row - 1) as u32) =
                     *data.get_pixel(col as u32, idx as u32);
+                bar.inc(1);
             }
         }
-        bar.inc(1);
     }
     // Finish progress bar
     bar.finish();
