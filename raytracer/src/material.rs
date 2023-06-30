@@ -4,7 +4,7 @@ use crate::{ray::*, texture::*, vec3::*};
 use std::sync::Arc;
 
 //有关生命周期的部分学习了https://zhuanlan.zhihu.com/p/441138623
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Vec3)>;
     fn emitted(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
         Color::zero()

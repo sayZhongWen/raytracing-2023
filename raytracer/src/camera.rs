@@ -1,6 +1,6 @@
 use crate::rtweekend::random;
 use crate::{ray::*, rtweekend::degrees_to_radians, vec3::*};
-
+#[derive(Clone)]
 pub struct Camera {
     origin: Vec3,
     lower_left_corner: Vec3,

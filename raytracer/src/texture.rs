@@ -5,7 +5,7 @@ use crate::vec3::{Color, Point3};
 use crate::rtweekend::clamp;
 use std::sync::Arc;
 
-pub trait Texture {
+pub trait Texture: Send + Sync {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color;
 }
 pub struct SolidColor {
