@@ -35,10 +35,11 @@ use crate::vec3::{Color, Point3};
 use image::ImageBuffer;
 use indicatif::ProgressBar;
 use std::fs::File;
-use std::sync::mpsc::channel;
-use std::sync::Arc;
+// use std::sync::mpsc::channel;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
-use threadpool::ThreadPool;
+// use threadpool::ThreadPool;
 pub use vec3::Vec3;
 
 const AUTHOR: &str = "Dizzy_D";
@@ -498,8 +499,8 @@ fn main() {
             aspect_ratio = 1.0;
             width = 800;
             // width = 300;
-            // samples_per_pixel = 10000;
-            samples_per_pixel = 5000;
+            samples_per_pixel = 10000;
+            // samples_per_pixel = 200;
             background = Color::zero();
             lookfrom = Point3::new(478.0, 278.0, -600.0);
             lookat = Point3::new(278.0, 278.0, 0.0);
@@ -529,13 +530,19 @@ fn main() {
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful
     // You can also use indicatif::MultiProgress in multi-threading to show progress of each thread
-    let sections = 20;
-    let workers = 20; //20,20 2min38s
+
+    // let sections = 20;
+    // let workers = 20; //20,20 2min38s
+    // let bar = if is_ci {
+    //     ProgressBar::hidden()
+    // } else {
+    //     ProgressBar::new((height * width) as u64)
+    //     // ProgressBar::new(sections as u64)
+    // };
     let bar = if is_ci {
-        ProgressBar::hidden()
+        Arc::new(ProgressBar::hidden())
     } else {
-        ProgressBar::new((height * width) as u64)
-        // ProgressBar::new(sections as u64)
+        Arc::new(ProgressBar::new((height * width) as u64))
     };
     // for j in 0..height {
     //     for i in 0..width {
@@ -560,25 +567,78 @@ fn main() {
     //         bar.inc(1);
     //     }
     // }
-    let (sender, receiver) = channel();
-    let pool = ThreadPool::new(workers);
-    for t in 0..sections {
-        let sender = sender.clone();
-        let worldd = world.clone();
-        let camm = cam.clone();
+
+    //方法一：mpsc
+    // let (sender, receiver) = channel();
+    // let pool = ThreadPool::new(workers);
+    // for t in 0..sections {
+    //     let sender = sender.clone();
+    //     let worldd = world.clone();
+    //     let camm = cam.clone();
+    //     let bg = background.clone();
+    //     pool.execute(move || {
+    //         let begin = height * t / sections;
+    //         let end = height * (t + 1) / sections;
+    //         let mut res = ImageBuffer::new(width as u32, height as u32 / sections as u32);
+    //         for (img_j, j) in (begin..end).enumerate() {
+    //             for i in 0..width {
+    //                 let mut color = Vec3::new(0.0, 0.0, 0.0);
+    //                 for _s in 0..samples_per_pixel {
+    //                     let u = (i as f64 + random_f64()) / ((width - 1) as f64);
+    //                     let v = (j as f64 + random_f64()) / ((height - 1) as f64);
+    //                     let r = camm.get_ray(u, v);
+    //                     color += ray_color(r, &bg, &*worldd, MAX_DEPTH as i32);
+    //                 }
+    //                 let scale = 1.0 / samples_per_pixel as f64;
+    //                 let r = (color.x() * scale).sqrt();
+    //                 let g = (color.y() * scale).sqrt();
+    //                 let b = (color.z() * scale).sqrt();
+    //                 let pixel_color = [
+    //                     (256.0 * clamp(r, 0.0, 0.999)) as u8,
+    //                     (256.0 * clamp(g, 0.0, 0.999)) as u8,
+    //                     (256.0 * clamp(b, 0.0, 0.999)) as u8,
+    //                 ];
+    //                 write_color(pixel_color, &mut res, i, img_j);
+    //             }
+    //         }
+    //         sender
+    //             .send((begin..end, res))
+    //             .expect("Fail to send the result!");
+    //     });
+    // }
+    // let mut img = ImageBuffer::new(width as u32, height as u32);
+    // for (rows, data) in receiver.iter().take(sections) {
+    //     for (idx, row) in rows.enumerate() {
+    //         for col in 0..width {
+    //             *img.get_pixel_mut(col as u32, (height - row - 1) as u32) =
+    //                 *data.get_pixel(col as u32, idx as u32);
+    //             bar.inc(1);
+    //         }
+    //     }
+    // }
+
+    //方法二：Arc+Mutex
+    let img = Arc::new(Mutex::new(ImageBuffer::new(
+        width.try_into().unwrap(),
+        height.try_into().unwrap(),
+    )));
+    let mut handles = vec![];
+    let thread_number = 20;
+    for t in 0..thread_number {
+        let world = Arc::clone(&world);
+        let img = Arc::clone(&img);
+        let bar = Arc::clone(&bar);
         let bg = background.clone();
-        pool.execute(move || {
-            let begin = height * t / sections;
-            let end = height * (t + 1) / sections;
-            let mut res = ImageBuffer::new(width as u32, height as u32 / sections as u32);
-            for (img_j, j) in (begin..end).enumerate() {
+        let camm = cam.clone();
+        let handle = thread::spawn(move || {
+            for j in (t * height / thread_number)..((t + 1) * height / thread_number) {
                 for i in 0..width {
-                    let mut color = Vec3::new(0.0, 0.0, 0.0);
+                    let mut color = Color::zero();
                     for _s in 0..samples_per_pixel {
-                        let u = (i as f64 + random_f64()) / ((width - 1) as f64);
-                        let v = (j as f64 + random_f64()) / ((height - 1) as f64);
+                        let u = (i as f64 + random_f64()) / (width - 1) as f64;
+                        let v = (j as f64 + random_f64()) / (height - 1) as f64;
                         let r = camm.get_ray(u, v);
-                        color += ray_color(r, &bg, &*worldd, MAX_DEPTH as i32);
+                        color += ray_color(r, &bg, &*world, MAX_DEPTH as i32);
                     }
                     let scale = 1.0 / samples_per_pixel as f64;
                     let r = (color.x() * scale).sqrt();
@@ -589,30 +649,24 @@ fn main() {
                         (256.0 * clamp(g, 0.0, 0.999)) as u8,
                         (256.0 * clamp(b, 0.0, 0.999)) as u8,
                     ];
-                    write_color(pixel_color, &mut res, i, img_j);
+                    write_color(pixel_color, &mut img.lock().unwrap(), i, height - j - 1);
+                    bar.inc(1);
                 }
             }
-            sender
-                .send((begin..end, res))
-                .expect("Fail to send the result!");
         });
+        handles.push(handle);
     }
-    let mut img = ImageBuffer::new(width as u32, height as u32);
-    for (rows, data) in receiver.iter().take(sections) {
-        for (idx, row) in rows.enumerate() {
-            for col in 0..width {
-                *img.get_pixel_mut(col as u32, (height - row - 1) as u32) =
-                    *data.get_pixel(col as u32, idx as u32);
-                bar.inc(1);
-            }
-        }
+    for handle in handles {
+        handle.join().unwrap();
     }
     // Finish progress bar
     bar.finish();
 
     // Output image to file
     println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);
-    let output_image = image::DynamicImage::ImageRgb8(img);
+    // let output_image = image::DynamicImage::ImageRgb8(img);
+    let output_image =
+        image::DynamicImage::ImageRgb8(Mutex::into_inner(Arc::into_inner(img).unwrap()).unwrap());
     let mut output_file = File::create(path).unwrap();
     match output_image.write_to(&mut output_file, image::ImageOutputFormat::Jpeg(quality)) {
         Ok(_) => {}
