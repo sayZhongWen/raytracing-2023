@@ -38,6 +38,7 @@ use std::fs::File;
 // use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::SystemTime;
 
 // use threadpool::ThreadPool;
 pub use vec3::Vec3;
@@ -418,7 +419,8 @@ fn main() {
 
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
-
+                      //time
+    let sys_time1 = SystemTime::now();
     //image
     const ASPECT_RATIO: f64 = 16.0 / 9.0;
     const IMAGE_WIDTH: usize = 400;
@@ -500,7 +502,7 @@ fn main() {
             width = 800;
             // width = 300;
             // samples_per_pixel = 10000;
-            samples_per_pixel = 5000;
+            samples_per_pixel = 100;
             background = Color::zero();
             lookfrom = Point3::new(478.0, 278.0, -600.0);
             lookat = Point3::new(278.0, 278.0, 0.0);
@@ -623,7 +625,7 @@ fn main() {
         height.try_into().unwrap(),
     )));
     let mut handles = vec![];
-    let thread_number = 20;
+    let thread_number = 1; //
     for t in 0..thread_number {
         let world = Arc::clone(&world);
         let img = Arc::clone(&img);
@@ -663,7 +665,15 @@ fn main() {
     bar.finish();
 
     // Output image to file
+    let sys_time2 = SystemTime::now();
     println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);
+    let difference = sys_time2
+        .duration_since(sys_time1)
+        .expect("Clock may have gone backwards");
+    println!(
+        "thread number is {};running time is {:?}",
+        thread_number, difference
+    );
     // let output_image = image::DynamicImage::ImageRgb8(img);
     let output_image =
         image::DynamicImage::ImageRgb8(Mutex::into_inner(Arc::into_inner(img).unwrap()).unwrap());
