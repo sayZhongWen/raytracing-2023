@@ -11,6 +11,7 @@ mod hittable_list;
 mod material;
 mod medium;
 mod onb;
+mod pdf;
 mod perlin;
 mod ray;
 mod rtweekend;
@@ -20,7 +21,7 @@ mod vec3;
 
 use crate::bvh::BvhNode;
 use crate::camera::Camera;
-use crate::hittable::{Hit, RotateY, Translate};
+use crate::hittable::{FlipFace, Hit, RotateY, Translate};
 use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Metal};
 pub use crate::ray::Ray;
@@ -56,13 +57,13 @@ fn ray_color(r: Ray, background: &Color, world: &dyn Hit, depth: i32) -> Color {
     }
     let mut pdf = 0.0;
     return if let Some(rec) = world.hit(&r, 0.001, f64::INFINITY) {
-        let emitted = rec.material.emitted(rec.u, rec.v, &rec.p);
+        let emitted = rec.material.emitted(&r, &rec, rec.u, rec.v, &rec.p);
         if let Some((mut scattered, attenuation)) = rec.material.scatter(&r, &rec, &mut pdf) {
             let on_light = Point3::new(random(213.0, 343.0), 554.0, random(227.0, 332.0));
             let mut to_light = on_light - rec.p.clone();
             let distance_squared = to_light.squared_length();
             to_light = to_light.unit_vector();
-            if to_light.dot(rec.normal) < 0.0 {
+            if to_light.dot(rec.normal.clone()) < 0.0 {
                 return emitted;
             }
             let light_area = (343 - 213) * (332 - 227);
@@ -71,7 +72,7 @@ fn ray_color(r: Ray, background: &Color, world: &dyn Hit, depth: i32) -> Color {
                 return emitted;
             }
             pdf = distance_squared / (light_cosine * light_area as f64);
-            scattered = Ray::new(rec.p, to_light, r.time());
+            scattered = Ray::new(rec.p.clone(), to_light, r.time());
             emitted
                 + attenuation
                     * rec.material.scattering_pdf(&r, &rec, &scattered)
@@ -224,9 +225,9 @@ fn cornell_box() -> HittableList {
     let light = Arc::new(DiffuseLight::new_color(Color::new(15.0, 15.0, 15.0)));
     obj.add(Arc::new(YZRect::new(green, 0.0, 555.0, 0.0, 555.0, 555.0)));
     obj.add(Arc::new(YZRect::new(red, 0.0, 555.0, 0.0, 555.0, 0.0)));
-    obj.add(Arc::new(XZRect::new(
+    obj.add(Arc::new(FlipFace::new(Arc::new(XZRect::new(
         light, 213.0, 343.0, 227.0, 332.0, 554.0,
-    )));
+    )))));
     obj.add(Arc::new(XZRect::new(
         white.clone(),
         0.0,

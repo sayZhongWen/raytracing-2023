@@ -163,3 +163,26 @@ impl Hit for RotateY {
         self.bbox.clone()
     }
 }
+
+pub struct FlipFace {
+    pub ptr: Arc<dyn Hit>,
+}
+impl FlipFace {
+    pub fn new(ptr: Arc<dyn Hit>) -> Self {
+        Self { ptr }
+    }
+}
+
+impl Hit for FlipFace {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        if let Some(mut rec) = self.ptr.hit(r, t_min, t_max) {
+            rec.front_face = !rec.front_face;
+            Some(rec)
+        } else {
+            None
+        }
+    }
+    fn bounding_box(&self, time0: f64, time1: f64) -> Option<AaBb> {
+        self.ptr.bounding_box(time0, time1)
+    }
+}
