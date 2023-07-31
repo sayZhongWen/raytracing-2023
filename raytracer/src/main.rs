@@ -43,7 +43,7 @@ use std::thread;
 use std::time::SystemTime;
 
 // use threadpool::ThreadPool;
-use crate::pdf::{CosinePdf, HittablePdf, Pdf};
+use crate::pdf::{CosinePdf, HittablePdf, MixturePdf, Pdf};
 pub use vec3::Vec3;
 
 const AUTHOR: &str = "Dizzy_D";
@@ -68,19 +68,19 @@ fn ray_color(
         if let Some((mut scattered, attenuation)) = rec.material.scatter(&r, &rec, &mut pdf) {
             let on_light = Point3::new(random(213.0, 343.0), 554.0, random(227.0, 332.0));
             let mut to_light = on_light - rec.p.clone();
-            let distance_squared = to_light.squared_length();
             to_light = to_light.unit_vector();
             if to_light.dot(rec.normal.clone()) < 0.0 {
                 return emitted;
             }
-            let light_area = (343 - 213) * (332 - 227);
             let light_cosine = to_light.y().abs();
             if light_cosine < 0.000001 {
                 return emitted;
             }
-            let light_pdf = HittablePdf::new(lights.clone(), rec.p.clone());
-            scattered = Ray::new(rec.p.clone(), light_pdf.generate(), r.time());
-            pdf = light_pdf.value(&scattered.dir());
+            let p0 = Arc::new(HittablePdf::new(lights.clone(), rec.p.clone()));
+            let p1 = Arc::new(CosinePdf::new(&rec.normal));
+            let mix_pdf = MixturePdf::new(p0, p1);
+            scattered = Ray::new(rec.p.clone(), mix_pdf.generate(), r.time());
+            pdf = mix_pdf.value(&scattered.dir());
             emitted
                 + attenuation
                     * rec.material.scattering_pdf(&r, &rec, &scattered)
@@ -509,7 +509,7 @@ fn main() {
             obj = cornell_box();
             aspect_ratio = 1.0;
             width = 600;
-            samples_per_pixel = 200;
+            samples_per_pixel = 1000;
             background = Color::zero();
             lookfrom = Point3::new(278.0, 278.0, -800.0);
             lookat = Point3::new(278.0, 278.0, 0.0);
