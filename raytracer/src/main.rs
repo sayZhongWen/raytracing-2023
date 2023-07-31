@@ -43,6 +43,7 @@ use std::thread;
 use std::time::SystemTime;
 
 // use threadpool::ThreadPool;
+use crate::pdf::{CosinePdf, Pdf};
 pub use vec3::Vec3;
 
 const AUTHOR: &str = "Dizzy_D";
@@ -71,8 +72,11 @@ fn ray_color(r: Ray, background: &Color, world: &dyn Hit, depth: i32) -> Color {
             if light_cosine < 0.000001 {
                 return emitted;
             }
-            pdf = distance_squared / (light_cosine * light_area as f64);
-            scattered = Ray::new(rec.p.clone(), to_light, r.time());
+            // pdf = distance_squared / (light_cosine * light_area as f64);
+            // scattered = Ray::new(rec.p.clone(), to_light, r.time());
+            let p = CosinePdf::new(&rec.normal);
+            scattered = Ray::new(rec.p.clone(), p.generate(), r.time());
+            pdf = p.value(&scattered.dir());
             emitted
                 + attenuation
                     * rec.material.scattering_pdf(&r, &rec, &scattered)
