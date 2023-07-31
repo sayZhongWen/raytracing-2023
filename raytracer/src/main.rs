@@ -10,6 +10,7 @@ mod hittable;
 mod hittable_list;
 mod material;
 mod medium;
+mod onb;
 mod perlin;
 mod ray;
 mod rtweekend;
@@ -53,10 +54,29 @@ fn ray_color(r: Ray, background: &Color, world: &dyn Hit, depth: i32) -> Color {
     if depth <= 0 {
         return Vec3::zero();
     }
+    let mut pdf = 0.0;
     return if let Some(rec) = world.hit(&r, 0.001, f64::INFINITY) {
         let emitted = rec.material.emitted(rec.u, rec.v, &rec.p);
-        if let Some((scattered, attenuation)) = rec.material.scatter(&r, &rec) {
-            emitted + attenuation * ray_color(scattered, background, world, depth - 1)
+        if let Some((mut scattered, attenuation)) = rec.material.scatter(&r, &rec, &mut pdf) {
+            let on_light = Point3::new(random(213.0, 343.0), 554.0, random(227.0, 332.0));
+            let mut to_light = on_light - rec.p.clone();
+            let distance_squared = to_light.squared_length();
+            to_light = to_light.unit_vector();
+            if to_light.dot(rec.normal) < 0.0 {
+                return emitted;
+            }
+            let light_area = (343 - 213) * (332 - 227);
+            let light_cosine = to_light.y().abs();
+            if light_cosine < 0.000001 {
+                return emitted;
+            }
+            pdf = distance_squared / (light_cosine * light_area as f64);
+            scattered = Ray::new(rec.p, to_light, r.time());
+            emitted
+                + attenuation
+                    * rec.material.scattering_pdf(&r, &rec, &scattered)
+                    * ray_color(scattered, background, world, depth - 1)
+                    / pdf
         } else {
             emitted
         }
@@ -437,7 +457,7 @@ fn main() {
     let vfov;
     let mut aperture = 0.0;
     let background;
-    let mode = 0;
+    let mode = 6;
     match mode {
         1 => {
             obj = random_scene();
@@ -625,7 +645,7 @@ fn main() {
         height.try_into().unwrap(),
     )));
     let mut handles = vec![];
-    let thread_number = 1; //
+    let thread_number = 31; //
     for t in 0..thread_number {
         let world = Arc::clone(&world);
         let img = Arc::clone(&img);

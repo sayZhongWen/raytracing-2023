@@ -1,10 +1,11 @@
 use crate::rtweekend::*;
 use std::f64;
+use std::f64::consts::PI;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Copy)]
 
 pub struct Vec3 {
     x: f64,
@@ -82,6 +83,15 @@ pub fn random_in_unit_sphere() -> Vec3 {
     }
 }
 
+pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
+    let in_unit_sphere = random_in_unit_sphere();
+    if in_unit_sphere.dot(normal) > 0.0 {
+        in_unit_sphere
+    } else {
+        -in_unit_sphere
+    }
+}
+
 pub fn random_unit_vector() -> Vec3 {
     random_in_unit_sphere().unit_vector()
 }
@@ -106,6 +116,17 @@ pub fn random_in_unit_disk() -> Vec3 {
         return p;
     }
 }
+
+pub fn random_cosine_direction() -> Vec3 {
+    let r1 = random_f64();
+    let r2 = random_f64();
+    let z = (1.0 - r2).sqrt();
+    let phi = 2.0 * PI * r1;
+    let x = phi.cos() * r2.sqrt();
+    let y = phi.sin() * r2.sqrt();
+    Vec3::new(x, y, z)
+}
+
 impl Add for Vec3 {
     type Output = Self;
 
