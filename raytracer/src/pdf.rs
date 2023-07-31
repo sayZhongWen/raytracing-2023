@@ -1,7 +1,9 @@
+use crate::hittable::Hit;
 use crate::onb::Onb;
-use crate::vec3::random_cosine_direction;
+use crate::vec3::{random_cosine_direction, Point3};
 use crate::Vec3;
 use std::f64::consts::PI;
+use std::sync::Arc;
 
 pub trait Pdf: Send + Sync {
     fn value(&self, direction: &Vec3) -> f64;
@@ -31,5 +33,24 @@ impl Pdf for CosinePdf {
     }
     fn generate(&self) -> Vec3 {
         self.uvw.local_vector(&random_cosine_direction())
+    }
+}
+
+pub struct HittablePdf {
+    o: Point3,
+    ptr: Arc<dyn Hit>,
+}
+
+impl HittablePdf {
+    pub fn new(ptr: Arc<dyn Hit>, o: Point3) -> Self {
+        Self { ptr, o }
+    }
+}
+impl Pdf for HittablePdf {
+    fn value(&self, direction: &Vec3) -> f64 {
+        self.ptr.pdf_value(&self.o, direction)
+    }
+    fn generate(&self) -> Vec3 {
+        self.ptr.random(&self.o)
     }
 }

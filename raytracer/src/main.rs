@@ -43,7 +43,7 @@ use std::thread;
 use std::time::SystemTime;
 
 // use threadpool::ThreadPool;
-use crate::pdf::{CosinePdf, Pdf};
+use crate::pdf::{CosinePdf, HittablePdf, Pdf};
 pub use vec3::Vec3;
 
 const AUTHOR: &str = "Dizzy_D";
@@ -52,7 +52,13 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
-fn ray_color(r: Ray, background: &Color, world: &dyn Hit, depth: i32) -> Color {
+fn ray_color(
+    r: Ray,
+    background: &Color,
+    world: &dyn Hit,
+    lights: Arc<dyn Hit>,
+    depth: i32,
+) -> Color {
     if depth <= 0 {
         return Vec3::zero();
     }
@@ -72,15 +78,13 @@ fn ray_color(r: Ray, background: &Color, world: &dyn Hit, depth: i32) -> Color {
             if light_cosine < 0.000001 {
                 return emitted;
             }
-            // pdf = distance_squared / (light_cosine * light_area as f64);
-            // scattered = Ray::new(rec.p.clone(), to_light, r.time());
-            let p = CosinePdf::new(&rec.normal);
-            scattered = Ray::new(rec.p.clone(), p.generate(), r.time());
-            pdf = p.value(&scattered.dir());
+            let light_pdf = HittablePdf::new(lights.clone(), rec.p.clone());
+            scattered = Ray::new(rec.p.clone(), light_pdf.generate(), r.time());
+            pdf = light_pdf.value(&scattered.dir());
             emitted
                 + attenuation
                     * rec.material.scattering_pdf(&r, &rec, &scattered)
-                    * ray_color(scattered, background, world, depth - 1)
+                    * ray_color(scattered, background, world, lights, depth - 1)
                     / pdf
         } else {
             emitted
@@ -535,6 +539,14 @@ fn main() {
         }
     }
     let world = BvhNode::newnew(obj, 0.0, 1.0);
+    let lights = Arc::new(XZRect::new(
+        Arc::new(DiffuseLight::new_color(Color::new(15.0, 15.0, 15.0))),
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+    ));
     let height = (width as f64 / aspect_ratio) as usize;
     //camera
     let vup = Vec3::new(0.0, 1.0, 0.0);
@@ -657,6 +669,7 @@ fn main() {
         let bar = Arc::clone(&bar);
         let bg = background.clone();
         let camm = cam.clone();
+        let lit = Arc::clone(&lights);
         let handle = thread::spawn(move || {
             for j in (t * height / thread_number)..((t + 1) * height / thread_number) {
                 for i in 0..width {
@@ -665,7 +678,7 @@ fn main() {
                         let u = (i as f64 + random_f64()) / (width - 1) as f64;
                         let v = (j as f64 + random_f64()) / (height - 1) as f64;
                         let r = camm.get_ray(u, v);
-                        color += ray_color(r, &bg, &*world, MAX_DEPTH as i32);
+                        color += ray_color(r, &bg, &*world, lit.clone(), MAX_DEPTH as i32);
                     }
                     let scale = 1.0 / samples_per_pixel as f64;
                     let r = (color.x() * scale).sqrt();

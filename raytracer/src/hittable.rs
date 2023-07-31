@@ -7,6 +7,12 @@ pub trait Hit: Send + Sync {
     //此处返回Option<HitRecord>的思想改编自助教分享的https://zhuanlan.zhihu.com/p/436876484
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<AaBb>;
+    fn pdf_value(&self, o: &Point3, v: &Vec3) -> f64 {
+        0.0
+    }
+    fn random(&self, o: &Vec3) -> Vec3 {
+        Vec3::new(1.0, 0.0, 0.0)
+    }
 }
 #[derive(Clone)]
 pub struct HitRecord<'a> {

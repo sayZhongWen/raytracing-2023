@@ -1,6 +1,7 @@
 use crate::aabb::AaBb;
 use crate::hittable::{Hit, HitRecord};
 use crate::material::Material;
+use crate::rtweekend::random;
 use crate::vec3::Point3;
 use crate::{Ray, Vec3};
 use std::sync::Arc;
@@ -99,6 +100,20 @@ impl Hit for XZRect {
             Point3::new(self.x0, self.k - 0.0001, self.z0),
             Point3::new(self.x1, self.k + 0.0001, self.z1),
         ))
+    }
+    fn pdf_value(&self, o: &Point3, v: &Vec3) -> f64 {
+        if let Some(rec) = self.hit(&Ray::new(o.clone(), v.clone(), 0.0), 0.001, f64::INFINITY) {
+            let area = (self.x1 - self.x0) * (self.z1 - self.z0);
+            let distance_squared = rec.t * rec.t * v.squared_length();
+            let cosine = (v.dot(rec.normal) / v.length()).abs();
+            distance_squared / (cosine * area)
+        } else {
+            0.0
+        }
+    }
+    fn random(&self, o: &Vec3) -> Vec3 {
+        let random_point = Point3::new(random(self.x0, self.x1), self.k, random(self.z0, self.z1));
+        random_point - o.clone()
     }
 }
 pub struct YZRect {
